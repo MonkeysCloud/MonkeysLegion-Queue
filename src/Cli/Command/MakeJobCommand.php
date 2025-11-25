@@ -67,12 +67,14 @@ declare(strict_types=1);
 
 namespace {{namespace}};
 
+use MonkeysLegion\Queue\Contracts\DispatchableJobInterface;
+
 /**
  * Job class: {{class}}
  * 
- * This job will be processed by the queue worker.
+ * This job will be processed by the queue worker if dispatched to the queue.
  */
-class {{class}}
+class {{class}} implements DispatchableJobInterface
 {
     /**
      * Create a new job instance.

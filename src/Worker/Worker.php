@@ -74,6 +74,7 @@ class Worker implements WorkerInterface
             set_time_limit($this->timeout);
 
             CliPrinter::printCliMessage("Processing", [
+                'class' => $job->getData()['job'] ?? 'Unknown class',
                 'job_id' => substr($job->getId(), 4, 8), // Short ID
                 'attempts' => $job->attempts() + 1
             ], 'processing');
@@ -83,22 +84,24 @@ class Worker implements WorkerInterface
             $this->queue->ack($job);
 
             CliPrinter::printCliMessage("Completed", [
+                'class' => $job->getData()['job'] ?? 'Unknown class',
                 'job_id' => substr($job->getId(), 4, 8),
                 'duration_ms' => round((microtime(true) - $start) * 1000, 2),
             ], 'notice');
         } catch (\Throwable $e) {
             $attempts = $job->attempts() + 1;
 
+            CliPrinter::printCliMessage("Failed", [
+                'class' => $job->getData()['job'] ?? 'Unknown class',
+                'job_id' => substr($job->getId(), 4, 8),
+                'attempts' => $attempts
+            ], 'error');
+
             if ($attempts < $this->maxTries) {
                 $this->retry($job, $e);
             } else {
                 $this->queue->ack($job);
                 $job->fail($e);
-
-                CliPrinter::printCliMessage("Failed", [
-                    'job_id' => substr($job->getId(), 4, 8),
-                    'attempts' => $attempts
-                ], 'error');
             }
         }
     }
@@ -110,7 +113,8 @@ class Worker implements WorkerInterface
 
         $this->queue->release($job, $delay);
 
-        CliPrinter::printCliMessage("Retrying", [
+        CliPrinter::printCliMessage("Pushed to retry later", [
+            'class' => $job->getData()['job'] ?? 'Unknown class',
             'job_id' => substr($job->getId(), 4, 8),
             'attempts' => $attempts,
             'delay' => $delay

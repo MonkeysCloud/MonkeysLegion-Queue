@@ -34,7 +34,7 @@ class CliPrinter
 
         // Add important context details inline
         if (!empty($context)) {
-            $importantKeys = ['job_id', 'attempts', 'max_tries', 'duration_ms', 'memory_usage_mb', 'error_message', 'count', 'queue', 'delay'];
+            $importantKeys = ['job_id', 'attempts', 'max_tries', 'duration_ms', 'memory_usage_mb', 'error_message', 'count', 'queue', 'delay', 'class'];
             $details = [];
 
             foreach ($importantKeys as $key) {
