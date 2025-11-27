@@ -1,6 +1,7 @@
 # PHPUnit
 coverage/
 .phpunit.result.cache
+/tests/results/
 
 # IDEs and editors
 .vscode/

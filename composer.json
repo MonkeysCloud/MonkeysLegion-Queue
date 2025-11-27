@@ -23,6 +23,8 @@
     "prefer-stable": true,
     "require": {
         "php": "^8.4",
-        "monkeyscloud/monkeyslegion-cli": "^1.0"
+        "monkeyscloud/monkeyslegion-cli": "^1.0",
+        "monkeyscloud/monkeyslegion-database": "^1.0",
+        "monkeyscloud/monkeyslegion-query": "^1.0"
     }
 }

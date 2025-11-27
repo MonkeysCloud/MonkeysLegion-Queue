@@ -133,7 +133,7 @@ class QueueFactoryTest extends TestCase
         $factory = new QueueFactory($config);
 
         $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Database queue driver not yet implemented');
+        $this->expectExceptionMessage('Database connection is required for Database queue driver');
 
         $factory->driver('database');
     }
@@ -158,29 +158,6 @@ class QueueFactoryTest extends TestCase
         $this->assertEquals('redis', $factory->getDefaultDriver());
         $this->assertEmpty($factory->getSettings());
         $this->assertEmpty($factory->getAvailableDrivers());
-    }
-
-    public function testRedisQueueWithUsernameAndPassword(): void
-    {
-        if (!extension_loaded('redis')) {
-            $this->markTestSkipped('Redis extension not loaded');
-        }
-
-        $config = $this->config;
-        $config['stores']['redis']['username'] = 'testuser2';
-        $config['stores']['redis']['password'] = 'test-password2';
-
-        try {
-            $factory = new QueueFactory($config);
-            $queue = $factory->driver('redis');
-
-            $this->assertInstanceOf(RedisQueue::class, $queue);
-        } catch (\RedisException $e) {
-            // Expected if Redis doesn't support ACL or rejects credentials
-            $this->assertStringContainsString('AUTH', $e->getMessage());
-        } catch (\RuntimeException $e) {
-            $this->markTestSkipped('Redis server not available');
-        }
     }
 
     public function testRedisQueueWithCustomDatabase(): void

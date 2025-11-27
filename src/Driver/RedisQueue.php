@@ -13,13 +13,10 @@ use MonkeysLegion\Queue\Job\Job;
 
 class RedisQueue extends AbstractQueue
 {
-    private Redis $redis;
-
     public function __construct(
-        \Redis $redis,
+        private Redis $redis,
         array $config = []
     ) {
-        $this->redis = $redis;
         parent::__construct($config);
     }
 

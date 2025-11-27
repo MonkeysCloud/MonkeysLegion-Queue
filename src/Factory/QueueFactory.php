@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace MonkeysLegion\Queue\Factory;
 
+use MonkeysLegion\Database\Contracts\ConnectionInterface;
 use MonkeysLegion\Queue\Contracts\QueueInterface;
+use MonkeysLegion\Queue\Driver\DatabaseQueue;
 use MonkeysLegion\Queue\Driver\RedisQueue;
 use MonkeysLegion\Queue\Driver\NullQueue;
 use Redis;
@@ -20,7 +22,7 @@ class QueueFactory
     private array $stores;
     private string $defaultDriver;
 
-    public function __construct(array $config)
+    public function __construct(array $config, private ?ConnectionInterface $dbConnection = null)
     {
         $this->defaultDriver = $config['default'] ?? 'redis';
         $this->settings = $config['settings'] ?? [];
@@ -46,7 +48,7 @@ class QueueFactory
         return match ($driver) {
             'redis' => $this->createRedisQueue(),
             'null' => $this->createNullQueue(),
-            'database' => throw new \RuntimeException('Database queue driver not yet implemented'),
+            'database' => $this->createDatabaseQueue(),
             default => throw new \InvalidArgumentException("Queue driver '{$driver}' is not supported"),
         };
     }
@@ -110,6 +112,23 @@ class QueueFactory
     private function createNullQueue(): NullQueue
     {
         return new NullQueue($this->settings);
+    }
+
+    /**
+     * Create a Database queue instance
+     */
+    private function createDatabaseQueue(): DatabaseQueue
+    {
+        $storeConfig = $this->stores['database'] ?? [];
+
+        if ($this->dbConnection === null) {
+            throw new \RuntimeException('Database connection is required for Database queue driver');
+        }
+        $config = $this->settings;
+        $config['table'] = $storeConfig['table'] ?? 'jobs';
+        $config['failed_table'] = $storeConfig['failed_table'] ?? 'failed_jobs';
+
+        return new DatabaseQueue($this->dbConnection, $config);
     }
 
     /**

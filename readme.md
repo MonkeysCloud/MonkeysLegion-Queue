@@ -9,8 +9,8 @@ A robust, feature-rich queue system for PHP applications with support for multip
 
 ✨ **Multiple Queue Drivers**
 - Redis (Production-ready)
+- Database (Production-ready)
 - Null (Testing/Development)
-- Database (Coming soon)
 
 🔄 **Automatic Retries**
 - Exponential backoff strategy
@@ -76,6 +76,7 @@ return [
         
         'database' => [
             'table' => $_ENV['QUEUE_DATABASE_TABLE'] ?? 'jobs',
+            'failed_table' => $_ENV['QUEUE_DATABASE_FAILED_TABLE'] ?? 'failed_jobs',
         ],
     ],
 ];
@@ -102,6 +103,7 @@ REDIS_TIMEOUT=2.0
 
 # Database Configuration (for future use)
 QUEUE_DATABASE_TABLE=jobs
+QUEUE_DATABASE_FAILED_TABLE=failed_jobs
 ```
 
 ## Usage
@@ -110,16 +112,25 @@ QUEUE_DATABASE_TABLE=jobs
 
 ```php
 use MonkeysLegion\Queue\Factory\QueueFactory;
+use MonkeysLegion\Database\MySQL\Connection;
+
+// Initialize connection in case of database driver
+$conn = new Connection([
+    'dsn' => 'mysql:host=localhost;dbname=myapp',
+    'username' => 'root',
+    'password' => 'secret'
+]);
 
 $config = require 'config/queue.php';
-$factory = new QueueFactory($config);
+$factory = new QueueFactory($config, $conn); // pass connection for database driver only
 
 // Get default queue driver
 $queue = $factory->make();
 
 // Or get specific driver
-$redisQueue = $factory->driver('redis');
-$nullQueue = $factory->driver('null');
+$redisQueue = $factory->driver('redis'); // if no connection passed nothing happens
+$nullQueue = $factory->driver('null'); // always works
+$databaseQueue = $factory->driver('database', $conn); // requires connection
 ```
 
 ### Creating Jobs
