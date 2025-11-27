@@ -1,0 +1,19 @@
+# PHPUnit
+coverage/
+.phpunit.result.cache
+/tests/results/
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Composer
+composer.lock
+/vendor/
+
+
+# Environment files
+.env
+.env.*
