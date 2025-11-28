@@ -32,6 +32,7 @@ class RedisQueue extends AbstractQueue
             'payload' => $jobData['payload'] ?? [],
             'attempts' => $jobData['attempts'] ?? 0,
             'created_at' => $jobData['created_at'] ?? microtime(true),
+            'queue' => $queue, // Store the queue name so we can track where this job belongs
         ];
 
         try {
@@ -67,6 +68,9 @@ class RedisQueue extends AbstractQueue
                 return null;
             }
 
+            // Ensure queue name is tracked in job data
+            $jobData['queue'] = $jobData['queue'] ?? $queue;
+
             return new Job($jobData, $this);
         } catch (\RedisException $e) {
             throw new \RuntimeException(
@@ -84,9 +88,10 @@ class RedisQueue extends AbstractQueue
             'job' => null,
             'payload' => [],
             'attempts' => $job->attempts(),
+            'queue' => $this->defaultQueue,
         ];
 
-        $queue = $this->defaultQueue;
+        $queue = $jobData['queue'] ?? $this->defaultQueue;
         $processingKey = $this->queuePrefix . $queue . ':processing';
 
         try {
@@ -108,12 +113,13 @@ class RedisQueue extends AbstractQueue
             'job' => null,
             'payload' => [],
             'attempts' => $job->attempts(),
+            'queue' => $this->defaultQueue,
         ];
 
         // Update attempts count
         $jobData['attempts'] = ($jobData['attempts'] ?? 0) + 1;
 
-        $queue = $this->defaultQueue;
+        $queue = $jobData['queue'] ?? $this->defaultQueue;
         $processingKey = $this->queuePrefix . $queue . ':processing';
 
         try {
@@ -155,13 +161,13 @@ class RedisQueue extends AbstractQueue
         try {
             $this->redis->close();
         } catch (\Exception $e) {
-            // ignore, we’re shutting down anyway
+            // ignore, we're shutting down anyway
         }
     }
 
     public function fail(JobInterface $job, ?\Throwable $error = null): void
     {
-        $failedKey = $this->queuePrefix . 'failed';
+        $failedKey = $this->queuePrefix . $this->failedQueue;
 
         // Extract job data from JobInterface
         $jobData = $job instanceof Job ? $job->getData() : [
@@ -169,6 +175,7 @@ class RedisQueue extends AbstractQueue
             'job' => null,
             'payload' => [],
             'attempts' => $job->attempts(),
+            'queue' => $this->defaultQueue,
         ];
 
         $failedJobData = [
@@ -176,6 +183,7 @@ class RedisQueue extends AbstractQueue
             'job' => $jobData['job'] ?? null,
             'payload' => $jobData['payload'] ?? [],
             'attempts' => $job->attempts(),
+            'queue' => $jobData['queue'] ?? $this->defaultQueue, // Preserve queue info
             'exception' => $error ? [
                 'message' => $error->getMessage(),
                 'file' => $error->getFile(),
@@ -194,9 +202,9 @@ class RedisQueue extends AbstractQueue
     }
 
 
-    public function getFailed(string $queue = 'failed', int $limit = 100): array
+    public function getFailed(int $limit = 100): array
     {
-        $failedKey = $this->queuePrefix . 'failed';
+        $failedKey = $this->queuePrefix . $this->failedQueue;
 
         try {
             $jobs = $this->redis->lRange($failedKey, 0, $limit - 1);
@@ -213,9 +221,9 @@ class RedisQueue extends AbstractQueue
         }
     }
 
-    public function clearFailed(string $failedQueue = 'failed'): void
+    public function clearFailed(): void
     {
-        $failedKey = $this->queuePrefix . $failedQueue;
+        $failedKey = $this->queuePrefix . $this->failedQueue;
 
         try {
             $this->redis->del($failedKey);
@@ -236,9 +244,9 @@ class RedisQueue extends AbstractQueue
         }
     }
 
-    public function countFailed(string $failedQueue = 'failed'): int
+    public function countFailed(): int
     {
-        $failedKey = $this->queuePrefix . $failedQueue;
+        $failedKey = $this->queuePrefix . $this->failedQueue;
 
         try {
             return $this->redis->lLen($failedKey);
@@ -278,6 +286,7 @@ class RedisQueue extends AbstractQueue
             'attempts'   => $jobData['attempts'] ?? 0,
             'created_at' => $jobData['created_at'] ?? microtime(true),
             'available_at' => $runAt,
+            'queue'      => $queue, // Track queue name
         ];
 
         try {
@@ -300,25 +309,38 @@ class RedisQueue extends AbstractQueue
             return;
         }
 
-        $this->redis->multi();
+        // FIX: Use configured prefix instead of hard-coded 'queue:'
+        $queue = $queue ?? $this->defaultQueue;
+        $queueKey = $this->queuePrefix . $queue;
 
+        // Validate all jobs before starting transaction
         foreach ($jobs as $entry) {
             if (!isset($entry['job'])) {
                 throw new InvalidArgumentException("Bulk job entry missing 'job' key.");
             }
-
-            $jobData = json_encode([
-                'id'        => uniqid('job_', true),
-                'job'       => $entry['job'],
-                'payload'   => $entry['payload'] ?? [],
-                'attempts'  => 0,
-                'created_at' => time(),
-            ]);
-
-            $this->redis->lPush("queue:{$queue}", $jobData);
         }
 
-        $this->redis->exec();
+        $this->redis->multi();
+
+        try {
+            foreach ($jobs as $entry) {
+                $jobData = [
+                    'id'        => uniqid('job_', true),
+                    'job'       => $entry['job'],
+                    'payload'   => $entry['payload'] ?? [],
+                    'attempts'  => 0,
+                    'created_at' => microtime(true),
+                    'queue'     => $queue, // Track queue name
+                ];
+
+                $this->redis->lPush($queueKey, $this->encodeJobData($jobData));
+            }
+
+            $this->redis->exec();
+        } catch (\RedisException $e) {
+            $this->redis->discard();
+            throw new \RuntimeException("Failed to bulk enqueue jobs: " . $e->getMessage(), 0, $e);
+        }
     }
 
     public function listQueue(string $queue = 'default', int $limit = 100): array
@@ -344,9 +366,9 @@ class RedisQueue extends AbstractQueue
         }
     }
 
-    public function retryFailed(string $failedQueue = 'failed', string $targetQueue = 'default', int $limit = 100): void
+    public function retryFailed(int $limit = 100): void
     {
-        $failedKey = $this->queuePrefix . $failedQueue;
+        $failedKey = $this->queuePrefix . $this->failedQueue;
 
         try {
             $jobs = $this->redis->lRange($failedKey, 0, $limit - 1);
@@ -362,22 +384,24 @@ class RedisQueue extends AbstractQueue
 
                 $this->redis->lRem($failedKey, $jobJson, 1);
 
+                $restoreQueue = $failedJobData['queue'];
+
                 $this->push([
                     'id' => $failedJobData['id'] ?? uniqid('job_', true),
                     'job' => $failedJobData['job'],
                     'payload' => $failedJobData['payload'] ?? [],
                     'attempts' => 0,
-                ], $targetQueue);
+                ], $restoreQueue);
             }
         } catch (RedisException $e) {
             throw new \RuntimeException("Failed to retry failed jobs: " . $e->getMessage(), 0, $e);
         }
     }
 
-    public function removeFailedJobs(string|array $jobIds, string $failedQueue = 'failed'): void
+    public function removeFailedJobs(string|array $jobIds): void
     {
         $ids = is_array($jobIds) ? $jobIds : [$jobIds];
-        $failedKey = $this->queuePrefix . $failedQueue;
+        $failedKey = $this->queuePrefix . $this->failedQueue;
 
         try {
             $jobs = $this->redis->lRange($failedKey, 0, -1);
@@ -422,6 +446,9 @@ class RedisQueue extends AbstractQueue
                 return null;
             }
 
+            // Ensure queue name is tracked
+            $jobData['queue'] = $jobData['queue'] ?? $queue;
+
             return new Job($jobData, $this);
         } catch (RedisException $e) {
             return null;
@@ -446,8 +473,12 @@ class RedisQueue extends AbstractQueue
                 if (!$jobData || !isset($jobData['id'])) continue;
 
                 if ($jobData['id'] === $jobId) {
+                    // Update queue name in job data
+                    $jobData['queue'] = $toQueue;
+                    $updatedJobJson = $this->encodeJobData($jobData);
+
                     $this->redis->lRem($fromKey, $jobJson, 1);
-                    $this->redis->lPush($toKey, $jobJson);
+                    $this->redis->lPush($toKey, $updatedJobJson);
                     return;
                 }
             }
@@ -526,6 +557,7 @@ class RedisQueue extends AbstractQueue
                     if (!is_string($jobJson)) continue;
                     $jobData = json_decode($jobJson, true);
                     if ($jobData && isset($jobData['id']) && $jobData['id'] === $jobId) {
+                        $jobData['queue'] = $jobData['queue'] ?? $queue;
                         return new Job($jobData, $this);
                     }
                 }
@@ -538,6 +570,7 @@ class RedisQueue extends AbstractQueue
                     if (!is_string($jobJson)) continue;
                     $jobData = json_decode($jobJson, true);
                     if ($jobData && isset($jobData['id']) && $jobData['id'] === $jobId) {
+                        $jobData['queue'] = $jobData['queue'] ?? $queue;
                         return new Job($jobData, $this);
                     }
                 }
@@ -550,6 +583,7 @@ class RedisQueue extends AbstractQueue
                     if (!is_string($jobJson)) continue;
                     $jobData = json_decode($jobJson, true);
                     if ($jobData && isset($jobData['id']) && $jobData['id'] === $jobId) {
+                        $jobData['queue'] = $jobData['queue'] ?? $queue;
                         return new Job($jobData, $this);
                     }
                 }

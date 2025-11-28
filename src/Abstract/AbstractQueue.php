@@ -61,24 +61,24 @@ abstract class AbstractQueue implements QueueInterface
     /**
      * Default implementation for retryFailed
      */
-    public function retryFailed(string $failedQueue = 'failed', string $targetQueue = 'default', int $limit = 100): void
+    public function retryFailed(int $limit = 100): void
     {
         $this->cliLine()
             ->warning("retryFailed() not implemented for this driver")
-            ->plain("FailedQueue={$failedQueue}, TargetQueue={$targetQueue}, Limit={$limit}")
+            ->plain("FailedQueue={$this->failedQueue}, Limit={$limit}")
             ->print();
     }
 
     /**
      * Default implementation for removeFailedJobs
      */
-    public function removeFailedJobs(string|array $jobIds, string $failedQueue = 'failed'): void
+    public function removeFailedJobs(string|array $jobIds): void
     {
         $ids = is_array($jobIds) ? $jobIds : [$jobIds];
 
         $this->cliLine()
             ->warning("removeFailedJobs() not implemented for this driver")
-            ->plain("JobCount=" . count($ids) . ", FailedQueue={$failedQueue}")
+            ->plain("JobCount=" . count($ids) . ", FailedQueue={$this->failedQueue}")
             ->print();
     }
 

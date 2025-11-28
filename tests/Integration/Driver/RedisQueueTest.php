@@ -236,9 +236,7 @@ class RedisQueueTest extends TestCase
 
         $this->queue->bulk($jobs, 'test_default');
 
-        // Note: bulk() uses different key format, check manually
-        $key = 'queue:test_default';
-        $count = $this->redis->lLen($key);
+        $count = $this->queue->count('test_default');
         $this->assertEquals(3, $count);
     }
 
@@ -285,7 +283,7 @@ class RedisQueueTest extends TestCase
         $job = $this->queue->pop('test_default');
         $this->queue->fail($job, new \Exception('Failed'));
 
-        $this->queue->retryFailed('failed', 'test_default', 10);
+        $this->queue->retryFailed(10);
 
         $this->assertEquals(0, $this->queue->countFailed());
         $this->assertEquals(1, $this->queue->count('test_default'));

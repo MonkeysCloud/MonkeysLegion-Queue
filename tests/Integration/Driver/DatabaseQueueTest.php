@@ -47,9 +47,10 @@ class DatabaseQueueTest extends TestCase
             CREATE TABLE IF NOT EXISTS failed_jobs (
                 id VARCHAR(64) PRIMARY KEY,
                 job VARCHAR(255) NOT NULL,
-                payload TEXT NOT NULL,
+                payload JSON NOT NULL,
+                original_queue VARCHAR(64) NOT NULL DEFAULT 'default',
                 attempts INT NOT NULL DEFAULT 0,
-                exception TEXT NULL,
+                exception JSON NULL,
                 failed_at DOUBLE NOT NULL,
                 created_at DOUBLE NULL
             );
@@ -245,7 +246,7 @@ class DatabaseQueueTest extends TestCase
         $job = $this->queue->pop('default');
         $this->queue->fail($job, new \Exception('Failed'));
 
-        $this->queue->retryFailed('failed', 'default', 10);
+        $this->queue->retryFailed(10);
 
         $this->assertEquals(0, $this->queue->countFailed());
         $this->assertEquals(1, $this->queue->count('default'));
@@ -460,7 +461,7 @@ class DatabaseQueueTest extends TestCase
 
     public function testRetryFailedOnEmptyFailedTableDoesNothing(): void
     {
-        $this->queue->retryFailed('failed', 'default');
+        $this->queue->retryFailed();
         $this->assertEquals(0, $this->queue->count());
     }
 }

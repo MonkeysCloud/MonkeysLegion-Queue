@@ -33,12 +33,12 @@ class AbstractQueueTest extends TestCase
             {
                 return 0;
             }
-            public function getFailed(string $queue = 'failed', int $limit = 100): array
+            public function getFailed(int $limit = 100): array
             {
                 return [];
             }
-            public function clearFailed(string $failedQueue = 'failed'): void {}
-            public function countFailed(string $failedQueue = 'failed'): int
+            public function clearFailed(): void {}
+            public function countFailed(): int
             {
                 return 0;
             }
@@ -74,12 +74,12 @@ class AbstractQueueTest extends TestCase
             {
                 return 0;
             }
-            public function getFailed(string $queue = 'failed', int $limit = 100): array
+            public function getFailed(int $limit = 100): array
             {
                 return [];
             }
-            public function clearFailed(string $failedQueue = 'failed'): void {}
-            public function countFailed(string $failedQueue = 'failed'): int
+            public function clearFailed(): void {}
+            public function countFailed(): int
             {
                 return 0;
             }
@@ -150,12 +150,12 @@ class AbstractQueueTest extends TestCase
             {
                 return 0;
             }
-            public function getFailed(string $queue = 'failed', int $limit = 100): array
+            public function getFailed(int $limit = 100): array
             {
                 return [];
             }
-            public function clearFailed(string $failedQueue = 'failed'): void {}
-            public function countFailed(string $failedQueue = 'failed'): int
+            public function clearFailed(): void {}
+            public function countFailed(): int
             {
                 return 0;
             }
@@ -219,12 +219,12 @@ class AbstractQueueTest extends TestCase
             {
                 return 0;
             }
-            public function getFailed(string $queue = 'failed', int $limit = 100): array
+            public function getFailed(int $limit = 100): array
             {
                 return [];
             }
-            public function clearFailed(string $failedQueue = 'failed'): void {}
-            public function countFailed(string $failedQueue = 'failed'): int
+            public function clearFailed(): void {}
+            public function countFailed(): int
             {
                 return 0;
             }
@@ -263,12 +263,12 @@ class AbstractQueueTest extends TestCase
             {
                 return 0;
             }
-            public function getFailed(string $queue = 'failed', int $limit = 100): array
+            public function getFailed(int $limit = 100): array
             {
                 return [];
             }
-            public function clearFailed(string $failedQueue = 'failed'): void {}
-            public function countFailed(string $failedQueue = 'failed'): int
+            public function clearFailed(): void {}
+            public function countFailed(): int
             {
                 return 0;
             }
@@ -327,7 +327,7 @@ class AbstractQueueTest extends TestCase
 
     public function testRetryFailedDefaultImplementation(): void
     {
-        $this->queue->retryFailed('failed', 'default', 10);
+        $this->queue->retryFailed(10);
         $this->assertTrue(true);
     }
 
@@ -423,12 +423,12 @@ class AbstractQueueTest extends TestCase
             {
                 return 0;
             }
-            public function getFailed(string $queue = 'failed', int $limit = 100): array
+            public function getFailed(int $limit = 100): array
             {
                 return [];
             }
-            public function clearFailed(string $failedQueue = 'failed'): void {}
-            public function countFailed(string $failedQueue = 'failed'): int
+            public function clearFailed(): void {}
+            public function countFailed(): int
             {
                 return 0;
             }

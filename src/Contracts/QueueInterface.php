@@ -99,14 +99,14 @@ interface QueueInterface
      * @param int $limit Maximum number of failed jobs to retrieve. Defaults to 100.
      * @return array<int, array{id: string, job: string, payload?: array, attempts?: int, exception?: array, failed_at: float}>
      */
-    public function getFailed(string $queue = 'failed', int $limit = 100): array;
+    public function getFailed(int $limit = 100): array;
 
     /**
      * Clear all jobs from a failed queue.
      *
      * @param string $failedQueue Failed queue name. Defaults to "failed".
      */
-    public function clearFailed(string $failedQueue = 'failed'): void;
+    public function clearFailed(): void;
 
     /**
      * Count the number of jobs in a failed queue.
@@ -114,7 +114,7 @@ interface QueueInterface
      * @param string $failedQueue Failed queue name. Defaults to "failed".
      * @return int
      */
-    public function countFailed(string $failedQueue = 'failed'): int;
+    public function countFailed(): int;
 
     /**
      * Purge all queues, removing all jobs from all queues.
@@ -128,7 +128,7 @@ interface QueueInterface
      * @param string $targetQueue Target normal queue. Defaults to "default".
      * @param int $limit Maximum number of failed jobs to retry. Defaults to 100.
      */
-    public function retryFailed(string $failedQueue = 'failed', string $targetQueue = 'default', int $limit = 100): void;
+    public function retryFailed(int $limit = 100): void;
 
     /**
      * Remove one or more jobs from a failed queue by their IDs.
@@ -136,7 +136,7 @@ interface QueueInterface
      * @param string|string[] $jobIds One or more job IDs.
      * @param string $failedQueue Failed queue name. Defaults to "failed".
      */
-    public function removeFailedJobs(string|array $jobIds, string $failedQueue = 'failed'): void;
+    public function removeFailedJobs(string|array $jobIds): void;
 
     /**
      * Peek at the next job in a queue without removing it.

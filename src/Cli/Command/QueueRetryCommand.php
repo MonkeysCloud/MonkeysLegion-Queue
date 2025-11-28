@@ -24,11 +24,9 @@ final class QueueRetryCommand extends Command
 
     public function handle(): int
     {
-        $queue = $this->option('queue') ?? 'default';
         $limit = (int)($this->option('limit') ?? 100);
 
         try {
-
             $beforeCount = $this->queueDriver->countFailed();
 
             if ($beforeCount === 0) {
@@ -36,12 +34,12 @@ final class QueueRetryCommand extends Command
                 return self::SUCCESS;
             }
 
-            $this->queueDriver->retryFailed('failed', $queue, $limit);
+            $this->queueDriver->retryFailed($limit);
 
             $afterCount = $this->queueDriver->countFailed();
             $retriedCount = $beforeCount - $afterCount;
 
-            $this->cliLine()->success("Retried {$retriedCount} failed jobs to queue '{$queue}'")->print();
+            $this->cliLine()->success("Retried {$retriedCount} failed jobs to their original queues")->print();
 
             return self::SUCCESS;
         } catch (\Throwable $e) {

@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS failed_jobs (
     id VARCHAR(64) PRIMARY KEY,
     job VARCHAR(255) NOT NULL,
     payload JSON NOT NULL,
+    original_queue VARCHAR(64) NOT NULL DEFAULT 'default',
     attempts INT NOT NULL DEFAULT 0,
     exception JSON NULL,
     failed_at DOUBLE NOT NULL,

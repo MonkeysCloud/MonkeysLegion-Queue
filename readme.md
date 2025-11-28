@@ -2,7 +2,7 @@
 
 A robust, feature-rich queue system for PHP applications with support for multiple drivers, job retries, delayed jobs, and comprehensive monitoring.
 
-[![PHP Version](https://img.shields.io/badge/PHP-8.2%2B-blue.svg)](https://www.php.net/)
+[![PHP Version](https://img.shields.io/badge/PHP-8.4%2B-blue.svg)](https://www.php.net/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 ## Features
@@ -279,8 +279,8 @@ php console queue:clear default
 # List failed jobs
 php console queue:failed --limit=20
 
-# Retry failed jobs
-php console queue:retry --queue=default --limit=100
+# Retry failed jobs and moves them back to their original queue
+php console queue:retry --limit=100
 
 # Permanently delete all failed jobs
 php console queue:flush
@@ -353,12 +353,12 @@ $queue->purge();
 
 ```php
 // Get failed jobs
-$failedJobs = $queue->getFailed('failed', 20);
+$failedJobs = $queue->getFailed(20);
 
-// Retry all failed jobs
-$queue->retryFailed('failed', 'default', 100);
+// Retry all failed jobs & move them back to their original queues
+$queue->retryFailed(100);
 
-// Remove specific failed jobs
+// Remove specific failed jobs & Accept string or simple array of job IDs
 $queue->removeFailedJobs(['job_123', 'job_456']);
 
 // Clear all failed jobs
@@ -451,6 +451,7 @@ src/
 │       └── QueueStatsCommand.php
 ├── Contracts/
 │   ├── JobInterface.php         # Job contract
+│   ├── DispatcherInterface.php  # Job dispatcher contract
 │   ├── QueueInterface.php       # Queue driver contract
 │   └── WorkerInterface.php      # Worker contract
 ├── Driver/
@@ -520,7 +521,6 @@ For issues, questions, or suggestions, please open an issue on GitHub.
 
 ## Roadmap
 
-- [ ] Database queue driver
 - [ ] Priority queues
 - [ ] Job batching
 - [ ] Job chaining

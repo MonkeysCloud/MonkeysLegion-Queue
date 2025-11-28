@@ -131,6 +131,7 @@ class DatabaseQueue extends AbstractQueue
             'job' => $jobData['job'] ?? null,
             'payload' => $this->encodeJobData($jobData['payload'] ?? []),
             'attempts' => $job->attempts(),
+            'original_queue' => $jobData['queue'] ?? $this->defaultQueue,
             'exception' => $error ? $this->encodeJobData([
                 'message' => $error->getMessage(),
                 'file' => $error->getFile(),
@@ -184,7 +185,7 @@ class DatabaseQueue extends AbstractQueue
         }
     }
 
-    public function getFailed(string $queue = 'failed', int $limit = 100): array
+    public function getFailed(int $limit = 100): array
     {
         try {
             $rows = $this->queryBuilder
@@ -213,7 +214,7 @@ class DatabaseQueue extends AbstractQueue
         }
     }
 
-    public function clearFailed(string $failedQueue = 'failed'): void
+    public function clearFailed(): void
     {
         try {
             $this->queryBuilder
@@ -226,7 +227,6 @@ class DatabaseQueue extends AbstractQueue
 
     public function count(string $queue = 'default'): int
     {
-        $queue = $queue ?? $this->defaultQueue;
         try {
             return (int) $this->queryBuilder
                 ->duplicate()
@@ -239,7 +239,7 @@ class DatabaseQueue extends AbstractQueue
         }
     }
 
-    public function countFailed(string $failedQueue = 'failed'): int
+    public function countFailed(): int
     {
         try {
             return $this->queryBuilder
@@ -314,7 +314,7 @@ class DatabaseQueue extends AbstractQueue
         }
     }
 
-    public function retryFailed(string $failedQueue = 'failed', string $targetQueue = 'default', int $limit = 100): void
+    public function retryFailed(int $limit = 100): void
     {
         try {
             $rows = $this->queryBuilder
@@ -333,7 +333,7 @@ class DatabaseQueue extends AbstractQueue
                     'attempts' => 0,
                     'created_at' => $row['created_at'] ?? microtime(true),
                 ];
-                $this->push($jobData, $targetQueue);
+                $this->push($jobData, $row['original_queue'] ?? $this->defaultQueue);
 
                 // Remove from failed table
                 $this->queryBuilder
@@ -346,7 +346,7 @@ class DatabaseQueue extends AbstractQueue
         }
     }
 
-    public function removeFailedJobs(string|array $jobIds, string $failedQueue = 'failed'): void
+    public function removeFailedJobs(string|array $jobIds): void
     {
         $ids = is_array($jobIds) ? $jobIds : [$jobIds];
         try {

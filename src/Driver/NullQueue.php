@@ -58,18 +58,18 @@ class NullQueue extends AbstractQueue
         return 0;
     }
 
-    public function getFailed(string $queue = 'failed', int $limit = 100): array
+    public function getFailed(int $limit = 100): array
     {
         // Always return empty array
         return [];
     }
 
-    public function clearFailed(string $failedQueue = 'failed'): void
+    public function clearFailed(): void
     {
         // Do nothing - nothing to clear
     }
 
-    public function countFailed(string $failedQueue = 'failed'): int
+    public function countFailed(): int
     {
         // Always return 0
         return 0;
@@ -90,12 +90,12 @@ class NullQueue extends AbstractQueue
         // Do nothing - all jobs are discarded
     }
 
-    public function retryFailed(string $failedQueue = 'failed', string $targetQueue = 'default', int $limit = 100): void
+    public function retryFailed(int $limit = 100): void
     {
         // Do nothing - no failed jobs to retry
     }
 
-    public function removeFailedJobs(string|array $jobIds, string $failedQueue = 'failed'): void
+    public function removeFailedJobs(string|array $jobIds): void
     {
         // Do nothing - no failed jobs to remove
     }

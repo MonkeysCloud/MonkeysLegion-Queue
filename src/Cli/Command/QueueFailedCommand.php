@@ -27,7 +27,7 @@ final class QueueFailedCommand extends Command
         $limit = (int)($this->option('limit') ?? 10);
 
         try {
-            $failedJobs = $this->queueDriver->getFailed('failed', $limit);
+            $failedJobs = $this->queueDriver->getFailed($limit);
             $totalFailed = $this->queueDriver->countFailed();
 
             $this->cliLine()->success("Failed Jobs (showing {$limit} of {$totalFailed}):")->print();

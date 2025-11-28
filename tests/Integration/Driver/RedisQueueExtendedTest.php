@@ -186,7 +186,7 @@ class RedisQueueExtendedTest extends TestCase
             $this->queue->fail($job, new \Exception("Error {$i}"));
         }
 
-        $failed = $this->queue->getFailed('failed', 5);
+        $failed = $this->queue->getFailed(5);
         $this->assertCount(5, $failed);
     }
 
@@ -196,9 +196,9 @@ class RedisQueueExtendedTest extends TestCase
         $job = $this->queue->pop('test_default');
         $this->queue->fail($job, new \Exception('Failed'));
 
-        $this->queue->retryFailed('failed', 'retry_queue', 10);
+        $this->queue->retryFailed(10);
 
-        $this->assertEquals(1, $this->queue->count('retry_queue'));
+        $this->assertEquals(1, $this->queue->count('test_default'));
         $this->assertEquals(0, $this->queue->countFailed());
     }
 
