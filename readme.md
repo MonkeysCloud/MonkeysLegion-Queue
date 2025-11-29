@@ -101,7 +101,7 @@ REDIS_PASSWORD=
 REDIS_DATABASE=0
 REDIS_TIMEOUT=2.0
 
-# Database Configuration (for future use)
+# Database Configuration
 QUEUE_DATABASE_TABLE=jobs
 QUEUE_DATABASE_FAILED_TABLE=failed_jobs
 ```
