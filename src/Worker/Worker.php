@@ -30,12 +30,15 @@ class Worker implements WorkerInterface
         $this->registerSignalHandlers();
     }
 
-    public function work(string $queue = 'default', int $sleep = 3): void
+    public function work(string|array $queue = 'default', int $sleep = 3): void
     {
         $this->sleep = $sleep;
+        if (is_string($queue)) {
+            $queue = [$queue];
+        }
 
         CliPrinter::printCliMessage("Worker started", [
-            'queue' => $queue
+            'queue' => implode(',', $queue),
         ], 'info');
 
         while (!$this->shouldQuit) {
@@ -48,9 +51,16 @@ class Worker implements WorkerInterface
                 break;
             }
 
-            $this->checkDelayedJobs($queue);
+            foreach ($queue as $queue_name) {
+                $this->checkDelayedJobs($queue_name);
+            }
 
-            $job = $this->queue->pop($queue);
+            foreach ($queue as $queue_name) {
+                $job = $this->queue->pop($queue_name);
+                if ($job) {
+                    break;
+                }
+            }
 
             if (!$job) {
                 sleep($this->sleep);
@@ -73,10 +83,12 @@ class Worker implements WorkerInterface
         try {
             set_time_limit($this->timeout);
 
+            $data = $job->getData();
             CliPrinter::printCliMessage("Processing", [
-                'class' => $job->getData()['job'] ?? 'Unknown class',
+                'class' => $data['job'] ?? 'Unknown class',
                 'job_id' => substr($job->getId(), 4, 8), // Short ID
-                'attempts' => $job->attempts() + 1
+                'attempts' => $job->attempts() + 1,
+                'queue' => $data['queue'] ?? 'Unknown queue',
             ], 'processing');
 
             $job->handle();
@@ -84,15 +96,16 @@ class Worker implements WorkerInterface
             $this->queue->ack($job);
 
             CliPrinter::printCliMessage("Completed", [
-                'class' => $job->getData()['job'] ?? 'Unknown class',
+                'class' => $data['job'] ?? 'Unknown class',
                 'job_id' => substr($job->getId(), 4, 8),
                 'duration_ms' => round((microtime(true) - $start) * 1000, 2),
+                'queue' => $data['queue'] ?? 'Unknown queue',
             ], 'notice');
         } catch (\Throwable $e) {
             $attempts = $job->attempts() + 1;
 
             CliPrinter::printCliMessage("Failed", [
-                'class' => $job->getData()['job'] ?? 'Unknown class',
+                'class' => $data['job'] ?? 'Unknown class',
                 'job_id' => substr($job->getId(), 4, 8),
                 'attempts' => $attempts
             ], 'error');
