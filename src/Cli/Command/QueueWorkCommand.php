@@ -25,7 +25,7 @@ final class QueueWorkCommand extends Command
 
     public function handle(): int
     {
-        $queue = $this->option('queue') ?? 'default';
+        $queue = $this->parseQueue($this->option('queue') ?? 'default');
         $sleep = (int)($this->option('sleep') ?? 3);
         $maxTries = (int)($this->option('tries') ?? 3);
         $memory = (int)($this->option('memory') ?? 128);
@@ -47,5 +47,11 @@ final class QueueWorkCommand extends Command
             $this->cliLine()->error('Failed to start worker: ' . $e->getMessage())->print();
             return self::FAILURE;
         }
+    }
+
+    private function parseQueue(string $queue): array
+    {
+        $queue = trim($queue, ' ');
+        return explode(',', $queue);
     }
 }

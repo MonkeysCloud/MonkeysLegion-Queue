@@ -8,27 +8,32 @@ A robust, feature-rich queue system for PHP applications with support for multip
 ## Features
 
 ✨ **Multiple Queue Drivers**
+
 - Redis (Production-ready)
 - Database (Production-ready)
 - Null (Testing/Development)
 
 🔄 **Automatic Retries**
+
 - Exponential backoff strategy
 - Configurable max attempts
 - Failed job tracking
 
 ⏰ **Delayed Jobs**
+
 - Schedule jobs for future execution
 - Automatic delayed job processing
 - Support for job prioritization
 
 📊 **Monitoring & Management**
+
 - Real-time queue statistics
 - Failed job inspection
 - Job search and management
 - CLI commands for queue operations
 
 🛡️ **Production Ready**
+
 - Graceful shutdown handling
 - Memory limit protection
 - Signal handling (SIGTERM, SIGINT)
@@ -73,7 +78,7 @@ return [
         ],
 
         'null' => [],
-        
+
         'database' => [
             'table' => $_ENV['QUEUE_DATABASE_TABLE'] ?? 'jobs',
             'failed_table' => $_ENV['QUEUE_DATABASE_FAILED_TABLE'] ?? 'failed_jobs',
@@ -229,6 +234,7 @@ php console queue:work \
 ```
 
 **Worker Options:**
+
 - `--queue` - Queue name to process (default: `default`)
 - `--sleep` - Seconds to wait when queue is empty (default: `3`)
 - `--tries` - Max retry attempts (default: `3`)
@@ -259,6 +265,15 @@ kill -SIGTERM <worker_pid>
 ```
 
 ## CLI Commands
+
+### Setup
+
+```bash
+# Setup database tables for the queue system
+php console queue:setup
+```
+
+This command will interactively ask for the table names (defaults: `jobs` and `failed_jobs`) and create them if they don't exist. It also provides the necessary `.env` configuration.
 
 ### Queue Management
 
