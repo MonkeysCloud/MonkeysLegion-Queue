@@ -19,11 +19,12 @@ A robust, feature-rich queue system for PHP applications with support for multip
 - Configurable max attempts
 - Failed job tracking
 
-⏰ **Delayed Jobs**
+⏰ **Delayed Jobs & Dispatching**
 
 - Schedule jobs for future execution
 - Automatic delayed job processing
-- Support for job prioritization
+- Priority queue support (process queues in order)
+- Clean dispatcher API for job dispatching
 
 📊 **Monitoring & Management**
 
@@ -172,7 +173,31 @@ class SendEmailJob
 
 ### Dispatching Jobs
 
-#### Push to Queue
+#### Using QueueDispatcher (Recommended)
+
+The `QueueDispatcher` provides a clean, object-oriented way to dispatch jobs:
+
+```php
+use MonkeysLegion\Queue\Dispatcher\QueueDispatcher;
+use App\Jobs\SendEmailJob;
+
+$dispatcher = new QueueDispatcher($queue);
+
+// Dispatch immediately
+$job = new SendEmailJob('user@example.com', 'Welcome!', 'Thanks for signing up');
+$dispatcher->dispatch($job);
+
+// Dispatch to specific queue
+$dispatcher->dispatch($job, queue: 'emails');
+
+// Dispatch with delay (in seconds)
+$dispatcher->dispatch($job, queue: 'emails', delay: 60);
+
+// Dispatch at specific timestamp
+$dispatcher->dispatchAt($job, timestamp: time() + 3600, queue: 'emails');
+```
+
+#### Push to Queue (Direct)
 
 ```php
 // Simple job
@@ -224,6 +249,12 @@ $queue->bulk($jobs, 'emails');
 # Basic worker
 php console queue:work
 
+# Process specific queue
+php console queue:work --queue=emails
+
+# Priority queues (processes in order: high, default, low)
+php console queue:work --queue=high,default,low
+
 # With options
 php console queue:work \
     --queue=emails \
@@ -235,11 +266,14 @@ php console queue:work \
 
 **Worker Options:**
 
-- `--queue` - Queue name to process (default: `default`)
+- `--queue` - Queue name(s) to process. Use comma-separated list for priority queues (default: `default`)
 - `--sleep` - Seconds to wait when queue is empty (default: `3`)
 - `--tries` - Max retry attempts (default: `3`)
 - `--memory` - Memory limit in MB (default: `128`)
 - `--timeout` - Job timeout in seconds (default: `60`)
+
+**Priority Queues:**
+When multiple queues are specified, the worker processes them in order. Jobs from the first queue are always processed before jobs from subsequent queues, allowing you to implement priority-based job processing.
 
 #### Worker Output
 
@@ -536,7 +570,7 @@ For issues, questions, or suggestions, please open an issue on GitHub.
 
 ## Roadmap
 
-- [ ] Priority queues
+- [x] Priority queues
 - [ ] Job batching
 - [ ] Job chaining
 - [ ] Rate limiting
