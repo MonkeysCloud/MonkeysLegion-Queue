@@ -7,9 +7,15 @@ namespace MonkeysLegion\Queue\Tests\Unit\Worker;
 use MonkeysLegion\Queue\Contracts\JobInterface;
 use MonkeysLegion\Queue\Contracts\QueueInterface;
 use MonkeysLegion\Queue\Worker\Worker;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
 
+// phpcs:disable PSR1.Files.SideEffects
+require_once __DIR__ . '/WorkerFunctionsMock.php';
+// phpcs:enable PSR1.Files.SideEffects
+
+#[AllowMockObjectsWithoutExpectations]
 class WorkerTest extends TestCase
 {
     private QueueInterface&MockObject $mockQueue;
@@ -53,6 +59,7 @@ class WorkerTest extends TestCase
             ->with($mockJob);
 
         $this->worker->process($mockJob);
+        $this->expectOutputRegex('/Processing/');
     }
 
     public function testProcessRetriesJobOnFailureWithinMaxTries(): void
@@ -76,6 +83,7 @@ class WorkerTest extends TestCase
             ->method('release')
             ->with($mockJob, $this->greaterThan(0));
 
+        $this->expectOutputRegex('/Processing/');
         $this->worker->process($mockJob);
     }
 
@@ -104,6 +112,7 @@ class WorkerTest extends TestCase
             ->method('fail')
             ->with($exception);
 
+        $this->expectOutputRegex('/Processing/');
         $this->worker->process($mockJob);
     }
 
@@ -121,6 +130,7 @@ class WorkerTest extends TestCase
 
     public function testStopSetsShutdownFlag(): void
     {
+        $this->expectOutputRegex('/Shutdown signal received/');
         $this->worker->stop();
 
         $stats = $this->worker->getStats();
@@ -129,6 +139,7 @@ class WorkerTest extends TestCase
 
     public function testStopOnlyPrintsMessageOnce(): void
     {
+        $this->expectOutputRegex('/Shutdown signal received/');
         $this->worker->stop();
         $this->worker->stop(); // Call twice
 
@@ -151,6 +162,7 @@ class WorkerTest extends TestCase
             ->method('release')
             ->with($mockJob, 1);
 
+        $this->expectOutputRegex('/Processing/');
         $this->worker->process($mockJob);
     }
 
@@ -179,6 +191,7 @@ class WorkerTest extends TestCase
             ->method('release')
             ->with($mockJob, $expectedDelay);
 
+        $this->expectOutputRegex('/Processing/');
         $this->worker->process($mockJob);
     }
 
@@ -199,6 +212,7 @@ class WorkerTest extends TestCase
             ->method('release')
             ->with($mockJob, 60);
 
+        $this->expectOutputRegex('/Processing/');
         $this->worker->process($mockJob);
     }
 
@@ -215,6 +229,7 @@ class WorkerTest extends TestCase
         $initialStats = $this->worker->getStats();
         $this->assertEquals(0, $initialStats['processed_jobs']);
 
+        $this->expectOutputRegex('/Processing/');
         $this->worker->process($mockJob);
 
         $finalStats = $this->worker->getStats();
@@ -341,6 +356,7 @@ class WorkerTest extends TestCase
             ->method('ack')
             ->with($mockJob);
 
+        $this->expectOutputRegex('/Worker started/');
         $this->worker->work('test_queue', 0);
 
         $stats = $this->worker->getStats();
@@ -362,6 +378,7 @@ class WorkerTest extends TestCase
         $this->mockQueue->expects($this->never())
             ->method('pop');
 
+        $this->expectOutputRegex('/Worker started/');
         $worker->work('test_queue', 0);
 
         $stats = $worker->getStats();
@@ -385,7 +402,9 @@ class WorkerTest extends TestCase
             ->method('pop')
             ->willReturnCallback(function () use (&$callCount, $worker) {
                 $callCount++;
-                if ($callCount === 1) return null; // First call triggers delayed check
+                if ($callCount === 1) {
+                    return null; // First call triggers delayed check
+                }
                 $worker->stop();                  // Stop immediately
                 return null;                      // Always return null afterward
             });
@@ -400,6 +419,7 @@ class WorkerTest extends TestCase
         $property = $reflection->getProperty('lastDelayedCheck');
         $property->setValue($worker, time() - 10);
 
+        $this->expectOutputRegex('/Worker started/');
         $worker->work('test_queue', 0);
     }
 
@@ -413,6 +433,7 @@ class WorkerTest extends TestCase
             });
 
         $start = microtime(true);
+        $this->expectOutputRegex('/Worker started/');
         $this->worker->work('test_queue', 1);
         $duration = microtime(true) - $start;
 
@@ -437,8 +458,12 @@ class WorkerTest extends TestCase
             ->method('pop')
             ->willReturnCallback(function () use (&$callCount, $mockJob1, $mockJob2) {
                 $callCount++;
-                if ($callCount === 1) return $mockJob1;
-                if ($callCount === 2) return $mockJob2;
+                if ($callCount === 1) {
+                    return $mockJob1;
+                }
+                if ($callCount === 2) {
+                    return $mockJob2;
+                }
                 $this->worker->stop();
                 return null;
             });
@@ -446,6 +471,7 @@ class WorkerTest extends TestCase
         $this->mockQueue->expects($this->exactly(2))
             ->method('ack');
 
+        $this->expectOutputRegex('/Worker started/');
         $this->worker->work('test_queue', 0);
 
         $stats = $this->worker->getStats();
@@ -464,7 +490,9 @@ class WorkerTest extends TestCase
             ->method('pop')
             ->willReturnCallback(function () use (&$callCount, $mockJob) {
                 $callCount++;
-                if ($callCount === 1) return $mockJob;
+                if ($callCount === 1) {
+                    return $mockJob;
+                }
                 $this->worker->stop();
                 return null;
             });
@@ -473,6 +501,7 @@ class WorkerTest extends TestCase
             ->method('release')
             ->with($mockJob, $this->greaterThan(0));
 
+        $this->expectOutputRegex('/Worker started/');
         $this->worker->work('test_queue', 0);
 
         $stats = $this->worker->getStats();
@@ -489,6 +518,7 @@ class WorkerTest extends TestCase
                 return null;
             });
 
+        $this->expectOutputRegex('/Worker started/');
         $this->worker->work(); // No parameters - should use 'default'
     }
 
@@ -502,6 +532,7 @@ class WorkerTest extends TestCase
             });
 
         $start = microtime(true);
+        $this->expectOutputRegex('/Worker started/');
         $this->worker->work('test_queue', 2); // Custom sleep of 2 seconds
         $duration = microtime(true) - $start;
 
@@ -546,6 +577,7 @@ class WorkerTest extends TestCase
             $mockJob->method('attempts')->willReturn($tc['attempts']);
             $mockJob->method('handle')->willThrowException(new \Exception('Test'));
 
+            $this->expectOutputRegex('/Processing/');
             $worker->process($mockJob);
         }
     }
@@ -567,6 +599,7 @@ class WorkerTest extends TestCase
             ->method('ack')
             ->with($mockJob);
 
+        $this->expectOutputRegex('/Processing/');
         $this->worker->process($mockJob);
 
         $this->assertTrue($handled);
@@ -591,6 +624,7 @@ class WorkerTest extends TestCase
             });
 
         $start = microtime(true);
+        $this->expectOutputRegex('/Worker started/');
         $this->worker->work('test_queue', 0); // Zero sleep
         $duration = microtime(true) - $start;
 
@@ -637,6 +671,7 @@ class WorkerTest extends TestCase
         $initialStats = $this->worker->getStats();
         $this->assertFalse($initialStats['should_quit']);
 
+        $this->expectOutputRegex('/Shutdown signal received/');
         $this->worker->stop();
         $stats1 = $this->worker->getStats();
         $this->assertTrue($stats1['should_quit']);
@@ -668,6 +703,7 @@ class WorkerTest extends TestCase
         $this->mockQueue->expects($this->once())->method('ack')->with($mockJob);
 
         $startTime = microtime(true);
+        $this->expectOutputRegex('/Processing/');
         $worker->process($mockJob);
         $elapsed = microtime(true) - $startTime;
 

@@ -439,6 +439,8 @@ class DatabaseQueueTest extends TestCase
 
     public function testGetStatsHandleException(): void
     {
+        $this->expectOutputRegex('/\[qb\.count\] PDOException/');
+
         $brokenQueue = new DatabaseQueue($this->connection, [
             'table' => 'unknown_table'
         ]);

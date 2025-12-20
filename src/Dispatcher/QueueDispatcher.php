@@ -4,22 +4,30 @@ declare(strict_types=1);
 
 namespace MonkeysLegion\Queue\Dispatcher;
 
+use MonkeysLegion\Queue\Batch\BatchRepository;
+use MonkeysLegion\Queue\Batch\PendingBatch;
+use MonkeysLegion\Queue\Chain\PendingChain;
 use MonkeysLegion\Queue\Contracts\QueueDispatcherInterface;
 use MonkeysLegion\Queue\Contracts\DispatchableJobInterface;
 use MonkeysLegion\Queue\Contracts\QueueInterface;
+use MonkeysLegion\Queue\Traits\JobSerializer;
 
 class QueueDispatcher implements QueueDispatcherInterface
 {
+    use JobSerializer;
+
     public function __construct(
-        private QueueInterface $queueDriver
-    ) {}
+        private QueueInterface $queueDriver,
+        private ?BatchRepository $batchRepository = null
+    ) {
+    }
 
     public function dispatch(
         DispatchableJobInterface $job,
         string $queue = 'default',
         ?int $delay = null
     ): void {
-        $jobData = $this->buildPayload($job);
+        $jobData = $this->serializeJob($job);
         if ($delay) {
             $this->queueDriver->later($delay, $jobData, $queue);
         } else {
@@ -32,31 +40,43 @@ class QueueDispatcher implements QueueDispatcherInterface
         int $timestamp,
         string $queue = 'default'
     ): void {
-        $jobData = $this->buildPayload($job);
+        $jobData = $this->serializeJob($job);
         $this->queueDriver->later($timestamp - time(), $jobData, $queue);
     }
 
-    private function buildPayload(DispatchableJobInterface $job): array
+    /**
+     * Create a new job chain.
+     *
+     * @param DispatchableJobInterface[] $jobs Jobs to chain
+     * @return PendingChain
+     */
+    public function chain(array $jobs): PendingChain
     {
-        $reflection = new \ReflectionClass($job);
-        $constructor = $reflection->getConstructor();
-        $payload = [];
+        return (new PendingChain($this->queueDriver))->add($jobs);
+    }
 
-        if ($constructor) {
-            foreach ($constructor->getParameters() as $param) {
-                $name = $param->getName();
-                // get value from property if it exists
-                if ($reflection->hasProperty($name)) {
-                    $prop = $reflection->getProperty($name);
-                    $payload[$name] = $prop->getValue($job);
-                }
-            }
+    /**
+     * Create a new job batch.
+     *
+     * @param DispatchableJobInterface[] $jobs Jobs to batch
+     * @return PendingBatch
+     */
+    public function batch(array $jobs): PendingBatch
+    {
+        if ($this->batchRepository === null) {
+            throw new \RuntimeException('Batch repository is not configured.');
         }
+        return (new PendingBatch($this->queueDriver, $this->batchRepository))->add($jobs);
+    }
 
-        // Build jobData
-        return [
-            'job' => get_class($job),
-            'payload' => $payload,
-        ];
+    /**
+     * Get the batch repository instance.
+     */
+    public function getBatchRepository(): BatchRepository
+    {
+        if ($this->batchRepository === null) {
+            throw new \RuntimeException('Batch repository is not configured.');
+        }
+        return $this->batchRepository;
     }
 }

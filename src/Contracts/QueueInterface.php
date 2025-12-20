@@ -6,7 +6,7 @@ namespace MonkeysLegion\Queue\Contracts;
 
 /**
  * Contract for all queue drivers (Redis, Database, Memory, etc.).
- * 
+ *
  * Provides a unified API for pushing, retrieving, and managing queued jobs
  * across multiple queue channels, including failed jobs.
  */
@@ -97,7 +97,14 @@ interface QueueInterface
      *
      * @param string $queue Failed queue name. Defaults to "failed".
      * @param int $limit Maximum number of failed jobs to retrieve. Defaults to 100.
-     * @return array<int, array{id: string, job: string, payload?: array, attempts?: int, exception?: array, failed_at: float}>
+     * @return array<int, array{
+     *     id: string,
+     *     job: string,
+     *     payload?: array,
+     *     attempts?: int,
+     *     exception?: array,
+     *     failed_at: float
+     * }>
      */
     public function getFailed(int $limit = 100): array;
 
@@ -189,13 +196,12 @@ interface QueueInterface
     public function findJob(string $jobId, string $queue = 'default'): ?JobInterface;
 
     /**
-     * Delete a specific job by ID from any queue (ready, processing, delayed).
+     * Delete a job from the queue by its ID.
      *
-     * @param string $jobId The job ID to delete.
-     * @param string $queue Queue name. Defaults to "default".
-     * @return bool True if job was found and deleted.
+     * @param string $id Job ID
+     * @return bool True if deleted, false if not found
      */
-    public function deleteJob(string $jobId, string $queue = 'default'): bool;
+    public function deleteJob(string $id, string $queue = 'default'): bool;
 
     /**
      * Get all available queue names.

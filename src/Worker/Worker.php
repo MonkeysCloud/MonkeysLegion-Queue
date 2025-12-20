@@ -4,10 +4,16 @@ declare(strict_types=1);
 
 namespace MonkeysLegion\Queue\Worker;
 
+use MonkeysLegion\Queue\Batch\BatchRepository;
 use MonkeysLegion\Queue\Contracts\JobInterface;
 use MonkeysLegion\Queue\Contracts\QueueInterface;
 use MonkeysLegion\Queue\Contracts\WorkerInterface;
+use MonkeysLegion\Queue\Events\JobFailed;
+use MonkeysLegion\Queue\Events\JobProcessed;
+use MonkeysLegion\Queue\Events\JobProcessing;
+use MonkeysLegion\Queue\Events\QueueEventDispatcher;
 use MonkeysLegion\Queue\Helpers\CliPrinter;
+use MonkeysLegion\Queue\RateLimiter\RateLimiterInterface;
 
 /**
  * Queue worker for processing jobs
@@ -18,6 +24,7 @@ class Worker implements WorkerInterface
     private bool $shouldQuit = false;
     private int $processedJobs = 0;
     private int $lastDelayedCheck = 0;
+    private string $currentQueue = 'default';
 
     public function __construct(
         private QueueInterface $queue,
@@ -25,7 +32,10 @@ class Worker implements WorkerInterface
         private int $maxTries = 3,
         private int $memory = 128,
         private int $timeout = 60,
-        private int $delayedCheckInterval = 30  // Check delayed jobs every 30 seconds
+        private int $delayedCheckInterval = 30,
+        private ?QueueEventDispatcher $eventDispatcher = null,
+        private ?RateLimiterInterface $rateLimiter = null,
+        private ?BatchRepository $batchRepository = null
     ) {
         $this->registerSignalHandlers();
     }
@@ -67,6 +77,23 @@ class Worker implements WorkerInterface
                 continue;
             }
 
+            // Check rate limiter before processing
+            if ($this->rateLimiter !== null) {
+                $queue_name = $job->getData()['queue'] ?? 'default';
+                if (!$this->rateLimiter->attempt($queue_name)) {
+                    // Rate limited - release job back and wait
+                    $waitTime = $this->rateLimiter->availableIn($queue_name);
+                    CliPrinter::printCliMessage("Rate limited", [
+                        'queue' => $queue_name,
+                        'wait_seconds' => $waitTime,
+                    ], 'warning');
+                    $this->queue->release($job, max(1, $waitTime));
+                    sleep(min($waitTime, $this->sleep));
+                    continue;
+                }
+            }
+
+            $this->currentQueue = $job->getData()['queue'] ?? 'default';
             $this->process($job);
             $this->processedJobs++;
         }
@@ -79,30 +106,43 @@ class Worker implements WorkerInterface
     public function process(JobInterface $job): void
     {
         $start = microtime(true);
+        $data = $job->getData();
+        $queue = $data['queue'] ?? $this->currentQueue;
+
+        // Dispatch JobProcessing event
+        $this->dispatchEvent(new JobProcessing($job, $queue));
 
         try {
             set_time_limit($this->timeout);
 
-            $data = $job->getData();
             CliPrinter::printCliMessage("Processing", [
                 'class' => $data['job'] ?? 'Unknown class',
-                'job_id' => substr($job->getId(), 4, 8), // Short ID
+                'job_id' => substr($job->getId(), 4, 8),
                 'attempts' => $job->attempts() + 1,
-                'queue' => $data['queue'] ?? 'Unknown queue',
+                'queue' => $queue,
             ], 'processing');
 
             $job->handle();
 
             $this->queue->ack($job);
 
+            $processingTimeMs = round((microtime(true) - $start) * 1000, 2);
+
             CliPrinter::printCliMessage("Completed", [
                 'class' => $data['job'] ?? 'Unknown class',
                 'job_id' => substr($job->getId(), 4, 8),
-                'duration_ms' => round((microtime(true) - $start) * 1000, 2),
-                'queue' => $data['queue'] ?? 'Unknown queue',
+                'duration_ms' => $processingTimeMs,
+                'queue' => $queue,
             ], 'notice');
+
+            // Dispatch JobProcessed event
+            $this->dispatchEvent(new JobProcessed($job, $queue, $processingTimeMs));
+
+            // Track batch completion if job is part of a batch
+            $this->trackBatchCompletion($job, true);
         } catch (\Throwable $e) {
             $attempts = $job->attempts() + 1;
+            $willRetry = $attempts < $this->maxTries;
 
             CliPrinter::printCliMessage("Failed", [
                 'class' => $data['job'] ?? 'Unknown class',
@@ -110,11 +150,16 @@ class Worker implements WorkerInterface
                 'attempts' => $attempts
             ], 'error');
 
-            if ($attempts < $this->maxTries) {
+            // Dispatch JobFailed event
+            $this->dispatchEvent(new JobFailed($job, $queue, $e, $willRetry));
+
+            if ($willRetry) {
                 $this->retry($job, $e);
             } else {
                 $this->queue->ack($job);
                 $job->fail($e);
+                // Track batch failure (job will not retry)
+                $this->trackBatchCompletion($job, false);
             }
         }
     }
@@ -191,5 +236,28 @@ class Worker implements WorkerInterface
             'memory_usage_mb' => round(memory_get_usage(true) / 1024 / 1024, 2),
             'should_quit' => $this->shouldQuit,
         ];
+    }
+
+    /**
+     * Dispatch an event if an event dispatcher is configured.
+     */
+    private function dispatchEvent(object $event): void
+    {
+        $this->eventDispatcher?->dispatch($event);
+    }
+
+    /**
+     * Track batch completion for a job if it's part of a batch.
+     */
+    private function trackBatchCompletion(JobInterface $job, bool $successful): void
+    {
+        $data = $job->getData();
+        $batchId = $data['batch_id'] ?? null;
+
+        if ($batchId === null || $this->batchRepository === null) {
+            return;
+        }
+
+        $this->batchRepository->recordJobCompletion($batchId, $successful, $job->getId());
     }
 }

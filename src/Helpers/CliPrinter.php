@@ -5,14 +5,34 @@ declare(strict_types=1);
 namespace MonkeysLegion\Queue\Helpers;
 
 use MonkeysLegion\Cli\Console\Traits\Cli;
+use MonkeysLegion\Cli\Console\Traits\CliLineBuilder;
 
 class CliPrinter
 {
     use Cli;
 
+    protected function cliLine(): CliLineBuilder
+    {
+        return new class extends CliLineBuilder {
+            public function print(bool $newline = true, $stream = STDOUT): void
+            {
+                $output = $this->build();
+                if ($newline) {
+                    $output .= PHP_EOL;
+                }
+                echo $output;
+            }
+        };
+    }
+
+    /**
+     * Whether to use output buffering for progress updates
+     */
+    public bool $outputBuffer = false;
+
     /**
      * Print a CLI-friendly colored message
-     * 
+     *
      * @param array<string, mixed> $context Additional context for the message
      */
     public static function printCliMessage(string $message, array $context = [], string $level = 'info'): void
@@ -34,7 +54,18 @@ class CliPrinter
 
         // Add important context details inline
         if (!empty($context)) {
-            $importantKeys = ['job_id', 'attempts', 'max_tries', 'duration_ms', 'memory_usage_mb', 'error_message', 'count', 'queue', 'delay', 'class'];
+            $importantKeys = [
+                'job_id', 'attempts', 'max_tries', 'duration_ms', 'memory_usage_mb',
+                'error_message', 'count', 'queue', 'delay', 'class'
+            ];
+            if ($instance->outputBuffer) {
+                // Determine max length for clearing line (default 80 if not detectable)
+                $width = (int) shell_exec('tput cols');
+                $width = $width > 0 ? $width : 80;
+
+                // Move cursor up and clear line
+                echo "\033[1A\033[2K";
+            }
             $details = [];
 
             foreach ($importantKeys as $key) {

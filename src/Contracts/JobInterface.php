@@ -18,7 +18,7 @@ interface JobInterface
 
     /**
      * Get the raw job data array
-     * 
+     *
      * @return array
      */
     public function getData(): array;

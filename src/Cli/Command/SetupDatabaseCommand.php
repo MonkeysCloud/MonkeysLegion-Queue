@@ -17,7 +17,8 @@ use MonkeysLegion\Cli\Command\MakerHelpers;
 #[CommandAttr('queue:setup', 'Setup the queue database tables')]
 final class SetupDatabaseCommand extends Command
 {
-    use Cli, MakerHelpers;
+    use Cli;
+    use MakerHelpers;
 
     public function __construct(private ConnectionInterface $connection)
     {
@@ -40,7 +41,13 @@ final class SetupDatabaseCommand extends Command
             return self::FAILURE;
         }
 
-        // 3. Execute Migrations
+        // 3. Batches Table
+        $batchesTable = $this->askForTable('Job Batches table name', 'job_batches');
+        if ($batchesTable === null) {
+            return self::FAILURE;
+        }
+
+        // 4. Execute Migrations
         if (!$this->runMigration('queue_jobs.sql', 'jobs', $jobsTable)) {
             return self::FAILURE;
         }
@@ -49,11 +56,16 @@ final class SetupDatabaseCommand extends Command
             return self::FAILURE;
         }
 
+        if (!$this->runMigration('job_batches.sql', 'job_batches', $batchesTable)) {
+            return self::FAILURE;
+        }
+
         $this->cliLine()->success('Queue tables setup successfully!')->print();
 
         $this->cliLine()->warning('Please ensure your .env file contains the following configuration:')->print();
         $this->cliLine()->plain("QUEUE_DATABASE_TABLE={$jobsTable}")->print();
         $this->cliLine()->plain("QUEUE_DATABASE_FAILED_TABLE={$failedTable}")->print();
+        $this->cliLine()->plain("QUEUE_DATABASE_BATCH_TABLE={$batchesTable}")->print();
 
         return self::SUCCESS;
     }
@@ -62,11 +74,15 @@ final class SetupDatabaseCommand extends Command
     {
         while (true) {
             $input = $this->ask("{$label} [{$default}]: ");
-            if (empty($input)) $input = $default;
+            if (empty($input)) {
+                $input = $default;
+            }
             $tableName = $input;
 
             if (!$this->validateTableName($tableName)) {
-                $this->cliLine()->error('Invalid table name. Use alphanumeric characters and underscores only.')->print();
+                $this->cliLine()
+                    ->error('Invalid table name. Use alphanumeric characters and underscores only.')
+                    ->print();
                 continue;
             }
 

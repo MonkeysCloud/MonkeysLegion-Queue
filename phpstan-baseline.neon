@@ -1,0 +1,1135 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue\:\:__construct\(\) has parameter \$config with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Abstract/AbstractQueue.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue\:\:encodeJobData\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Abstract/AbstractQueue.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Batch\\Batch\:\:fromArray\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Batch/Batch.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Batch\\Batch\:\:getFailedJobIds\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Batch/Batch.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Batch\\Batch\:\:toArray\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Batch/Batch.php
+
+		-
+			message: '#^Property MonkeysLegion\\Queue\\Batch\\Batch\:\:\$failedJobIds type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Batch/Batch.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Batch\\BatchRepository\:\:all\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Batch/BatchRepository.php
+
+		-
+			message: '#^Property MonkeysLegion\\Queue\\Batch\\BatchRepository\:\:\$queue is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Batch/BatchRepository.php
+
+		-
+			message: '#^Trying to invoke object but it might not be a callable\.$#'
+			identifier: callable.nonCallable
+			count: 1
+			path: src/Batch/BatchRepository.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Batch\\PendingBatch\:\:serializeJob\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Batch/PendingBatch.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Chain\\PendingChain\:\:serializeJob\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Chain/PendingChain.php
+
+		-
+			message: '#^Parameter \#3 \$subject of function str_replace expects array\<string\>\|string, string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Cli/Command/MakeJobCommand.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Cli\\Command\\QueueClearCommand\:\:__construct\(\) with return type void returns null but should not return anything\.$#'
+			identifier: return.void
+			count: 1
+			path: src/Cli/Command/QueueClearCommand.php
+
+		-
+			message: '#^Result of method MonkeysLegion\\Cli\\Console\\Command\:\:__construct\(\) \(void\) is used\.$#'
+			identifier: staticMethod.void
+			count: 1
+			path: src/Cli/Command/QueueClearCommand.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Cli\\Command\\QueueFailedCommand\:\:__construct\(\) with return type void returns null but should not return anything\.$#'
+			identifier: return.void
+			count: 1
+			path: src/Cli/Command/QueueFailedCommand.php
+
+		-
+			message: '#^Offset ''attempts'' might not exist on array\{id\: string, job\: string, payload\?\: array, attempts\?\: int, exception\?\: array, failed_at\: float\}\.$#'
+			identifier: offsetAccess.notFound
+			count: 1
+			path: src/Cli/Command/QueueFailedCommand.php
+
+		-
+			message: '#^Offset ''failed_at'' on array\{id\: string, job\: string, payload\?\: array, attempts\?\: int, exception\?\: array, failed_at\: float\} in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.offset
+			count: 1
+			path: src/Cli/Command/QueueFailedCommand.php
+
+		-
+			message: '#^Result of method MonkeysLegion\\Cli\\Console\\Command\:\:__construct\(\) \(void\) is used\.$#'
+			identifier: staticMethod.void
+			count: 1
+			path: src/Cli/Command/QueueFailedCommand.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Cli\\Command\\QueueFlushCommand\:\:__construct\(\) with return type void returns null but should not return anything\.$#'
+			identifier: return.void
+			count: 1
+			path: src/Cli/Command/QueueFlushCommand.php
+
+		-
+			message: '#^Parameter \#1 \$stream of function fclose expects resource, resource\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Cli/Command/QueueFlushCommand.php
+
+		-
+			message: '#^Parameter \#1 \$stream of function fgets expects resource, resource\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Cli/Command/QueueFlushCommand.php
+
+		-
+			message: '#^Parameter \#1 \$string of function trim expects string, string\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Cli/Command/QueueFlushCommand.php
+
+		-
+			message: '#^Result of method MonkeysLegion\\Cli\\Console\\Command\:\:__construct\(\) \(void\) is used\.$#'
+			identifier: staticMethod.void
+			count: 1
+			path: src/Cli/Command/QueueFlushCommand.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Cli\\Command\\QueueListCommand\:\:__construct\(\) with return type void returns null but should not return anything\.$#'
+			identifier: return.void
+			count: 1
+			path: src/Cli/Command/QueueListCommand.php
+
+		-
+			message: '#^Result of method MonkeysLegion\\Cli\\Console\\Command\:\:__construct\(\) \(void\) is used\.$#'
+			identifier: staticMethod.void
+			count: 1
+			path: src/Cli/Command/QueueListCommand.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Cli\\Command\\QueueRetryCommand\:\:__construct\(\) with return type void returns null but should not return anything\.$#'
+			identifier: return.void
+			count: 1
+			path: src/Cli/Command/QueueRetryCommand.php
+
+		-
+			message: '#^Result of method MonkeysLegion\\Cli\\Console\\Command\:\:__construct\(\) \(void\) is used\.$#'
+			identifier: staticMethod.void
+			count: 1
+			path: src/Cli/Command/QueueRetryCommand.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Cli\\Command\\QueueStatsCommand\:\:__construct\(\) with return type void returns null but should not return anything\.$#'
+			identifier: return.void
+			count: 1
+			path: src/Cli/Command/QueueStatsCommand.php
+
+		-
+			message: '#^Result of method MonkeysLegion\\Cli\\Console\\Command\:\:__construct\(\) \(void\) is used\.$#'
+			identifier: staticMethod.void
+			count: 1
+			path: src/Cli/Command/QueueStatsCommand.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Cli\\Command\\QueueWorkCommand\:\:__construct\(\) with return type void returns null but should not return anything\.$#'
+			identifier: return.void
+			count: 1
+			path: src/Cli/Command/QueueWorkCommand.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Cli\\Command\\QueueWorkCommand\:\:parseQueue\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Cli/Command/QueueWorkCommand.php
+
+		-
+			message: '#^Result of method MonkeysLegion\\Cli\\Console\\Command\:\:__construct\(\) \(void\) is used\.$#'
+			identifier: staticMethod.void
+			count: 1
+			path: src/Cli/Command/QueueWorkCommand.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Cli\\Command\\SetupDatabaseCommand\:\:askForTable\(\) never returns null so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: src/Cli/Command/SetupDatabaseCommand.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Cli\\Command\\SetupDatabaseCommand\:\:readInput\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: src/Cli/Command/SetupDatabaseCommand.php
+
+		-
+			message: '#^Parameter \#1 \$stream of function fclose expects resource, resource\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Cli/Command/SetupDatabaseCommand.php
+
+		-
+			message: '#^Parameter \#1 \$stream of function fgets expects resource, resource\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Cli/Command/SetupDatabaseCommand.php
+
+		-
+			message: '#^Parameter \#3 \$subject of function str_replace expects array\<string\>\|string, string\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Cli/Command/SetupDatabaseCommand.php
+
+		-
+			message: '#^Variable \$statement in empty\(\) always exists and is not falsy\.$#'
+			identifier: empty.variable
+			count: 1
+			path: src/Cli/Command/SetupDatabaseCommand.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Contracts\\JobInterface\:\:getData\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Contracts/JobInterface.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Contracts\\QueueInterface\:\:bulk\(\) has parameter \$jobs with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Contracts/QueueInterface.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Contracts\\QueueInterface\:\:getFailed\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 2
+			path: src/Contracts/QueueInterface.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Contracts\\QueueInterface\:\:later\(\) has parameter \$jobData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Contracts/QueueInterface.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Contracts\\QueueInterface\:\:listQueue\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Contracts/QueueInterface.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Contracts\\QueueInterface\:\:push\(\) has parameter \$jobData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Contracts/QueueInterface.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$failedQueue$#'
+			identifier: parameter.notFound
+			count: 4
+			path: src/Contracts/QueueInterface.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$queue$#'
+			identifier: parameter.notFound
+			count: 1
+			path: src/Contracts/QueueInterface.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$targetQueue$#'
+			identifier: parameter.notFound
+			count: 1
+			path: src/Contracts/QueueInterface.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Dispatcher\\QueueDispatcher\:\:serializeJob\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Dispatcher/QueueDispatcher.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Driver\\DatabaseQueue\:\:__construct\(\) has parameter \$config with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Driver/DatabaseQueue.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Driver\\DatabaseQueue\:\:bulk\(\) has parameter \$jobs with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Driver/DatabaseQueue.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Driver\\DatabaseQueue\:\:getFailed\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 2
+			path: src/Driver/DatabaseQueue.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Driver\\DatabaseQueue\:\:later\(\) has parameter \$jobData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Driver/DatabaseQueue.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Driver\\DatabaseQueue\:\:listQueue\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Driver/DatabaseQueue.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Driver\\DatabaseQueue\:\:push\(\) has parameter \$jobData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Driver/DatabaseQueue.php
+
+		-
+			message: '#^Offset ''attempts'' on array\{job\: string, payload\?\: array\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Driver/DatabaseQueue.php
+
+		-
+			message: '#^Offset ''available_at'' on array\{job\: string, payload\?\: array\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Driver/DatabaseQueue.php
+
+		-
+			message: '#^Offset ''created_at'' on array\{job\: string, payload\?\: array\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Driver/DatabaseQueue.php
+
+		-
+			message: '#^Offset ''id'' on array\{job\: string, payload\?\: array\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Driver/DatabaseQueue.php
+
+		-
+			message: '#^Offset ''job'' on array\{job\: string, payload\?\: array\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Driver/DatabaseQueue.php
+
+		-
+			message: '#^Variable \$queue on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 11
+			path: src/Driver/DatabaseQueue.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Driver\\NullQueue\:\:bulk\(\) has parameter \$jobs with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Driver/NullQueue.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Driver\\NullQueue\:\:getFailed\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 2
+			path: src/Driver/NullQueue.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Driver\\NullQueue\:\:later\(\) has parameter \$jobData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Driver/NullQueue.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Driver\\NullQueue\:\:listQueue\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Driver/NullQueue.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Driver\\NullQueue\:\:push\(\) has parameter \$jobData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Driver/NullQueue.php
+
+		-
+			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Driver/RedisQueue.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Driver\\RedisQueue\:\:__construct\(\) has parameter \$config with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Driver/RedisQueue.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Driver\\RedisQueue\:\:bulk\(\) has parameter \$jobs with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Driver/RedisQueue.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Driver\\RedisQueue\:\:getFailed\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 2
+			path: src/Driver/RedisQueue.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Driver\\RedisQueue\:\:later\(\) has parameter \$jobData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Driver/RedisQueue.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Driver\\RedisQueue\:\:listQueue\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Driver/RedisQueue.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Driver\\RedisQueue\:\:push\(\) has parameter \$jobData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Driver/RedisQueue.php
+
+		-
+			message: '#^Offset ''attempts'' on array\{job\: non\-falsy\-string, payload\?\: array\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Driver/RedisQueue.php
+
+		-
+			message: '#^Offset ''attempts'' on array\{job\: string, payload\?\: array\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Driver/RedisQueue.php
+
+		-
+			message: '#^Offset ''created_at'' on array\{job\: non\-falsy\-string, payload\?\: array\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Driver/RedisQueue.php
+
+		-
+			message: '#^Offset ''created_at'' on array\{job\: string, payload\?\: array\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Driver/RedisQueue.php
+
+		-
+			message: '#^Offset ''id'' on array\{job\: non\-falsy\-string, payload\?\: array\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Driver/RedisQueue.php
+
+		-
+			message: '#^Offset ''id'' on array\{job\: string, payload\?\: array\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Driver/RedisQueue.php
+
+		-
+			message: '#^Offset ''job'' on array\{job\: string, payload\?\: array\} in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.offset
+			count: 1
+			path: src/Driver/RedisQueue.php
+
+		-
+			message: '#^Offset ''job'' on array\{job\: string, payload\?\: array\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Driver/RedisQueue.php
+
+		-
+			message: '#^Parameter \#1 \$jobData of method MonkeysLegion\\Queue\\Driver\\RedisQueue\:\:push\(\) expects array\{job\: string, payload\?\: array\}, non\-empty\-array given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Driver/RedisQueue.php
+
+		-
+			message: '#^Parameter \#2 \$jobData of method MonkeysLegion\\Queue\\Driver\\RedisQueue\:\:later\(\) expects array\{job\: string, payload\?\: array\}, non\-empty\-array given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Driver/RedisQueue.php
+
+		-
+			message: '#^Variable \$queue on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 11
+			path: src/Driver/RedisQueue.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Factory\\QueueFactory\:\:__construct\(\) has parameter \$config with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Factory/QueueFactory.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Factory\\QueueFactory\:\:getSettings\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Factory/QueueFactory.php
+
+		-
+			message: '#^Property MonkeysLegion\\Queue\\Factory\\QueueFactory\:\:\$settings type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Factory/QueueFactory.php
+
+		-
+			message: '#^Property MonkeysLegion\\Queue\\Factory\\QueueFactory\:\:\$stores type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Factory/QueueFactory.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Job\\Job\:\:__construct\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Job/Job.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Job\\Job\:\:getData\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Job/Job.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\RateLimiter\\RateLimiter\:\:getConfig\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/RateLimiter/RateLimiter.php
+
+		-
+			message: '#^Call to function MonkeysLegion\\Queue\\Worker\\set_time_limit\(\) on a separate line has no effect\.$#'
+			identifier: function.resultUnused
+			count: 1
+			path: src/Worker/Worker.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Worker\\Worker\:\:getStats\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Worker/Worker.php
+
+		-
+			message: '#^Variable \$job might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: src/Worker/Worker.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Tests\\Fixtures\\MemoryQueue\:\:bulk\(\) has parameter \$jobs with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Fixtures/MemoryQueue.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Tests\\Fixtures\\MemoryQueue\:\:getFailed\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 2
+			path: tests/Fixtures/MemoryQueue.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Tests\\Fixtures\\MemoryQueue\:\:later\(\) has parameter \$jobData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Fixtures/MemoryQueue.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Tests\\Fixtures\\MemoryQueue\:\:listQueue\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Fixtures/MemoryQueue.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Tests\\Fixtures\\MemoryQueue\:\:push\(\) has parameter \$jobData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Fixtures/MemoryQueue.php
+
+		-
+			message: '#^Parameter \#1 \$jobData of method MonkeysLegion\\Queue\\Tests\\Fixtures\\MemoryQueue\:\:push\(\) expects array\{job\: string, payload\?\: array\}, non\-empty\-array given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Fixtures/MemoryQueue.php
+
+		-
+			message: '#^Parameter \#2 \$jobData of method MonkeysLegion\\Queue\\Tests\\Fixtures\\MemoryQueue\:\:later\(\) expects array\{job\: string, payload\?\: array\}, non\-empty\-array given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Fixtures/MemoryQueue.php
+
+		-
+			message: '#^Property MonkeysLegion\\Queue\\Tests\\Fixtures\\MemoryQueue\:\:\$delayed type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Fixtures/MemoryQueue.php
+
+		-
+			message: '#^Property MonkeysLegion\\Queue\\Tests\\Fixtures\\MemoryQueue\:\:\$failed type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Fixtures/MemoryQueue.php
+
+		-
+			message: '#^Property MonkeysLegion\\Queue\\Tests\\Fixtures\\MemoryQueue\:\:\$jobs type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Fixtures/MemoryQueue.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Integration/Batch/BatchRepositoryTest.php
+
+		-
+			message: '#^Cannot call method getFailedJobIds\(\) on MonkeysLegion\\Queue\\Batch\\Batch\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Integration/Batch/BatchRepositoryTest.php
+
+		-
+			message: '#^Cannot call method getFailedJobs\(\) on MonkeysLegion\\Queue\\Batch\\Batch\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Integration/Batch/BatchRepositoryTest.php
+
+		-
+			message: '#^Cannot call method getPendingJobs\(\) on MonkeysLegion\\Queue\\Batch\\Batch\|null\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: tests/Integration/Batch/BatchRepositoryTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertNull\(\) with array will always evaluate to false\.$#'
+			identifier: method.impossibleType
+			count: 1
+			path: tests/Integration/Driver/DatabaseQueueTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 4
+			path: tests/Integration/Driver/DatabaseQueueTest.php
+
+		-
+			message: '#^Cannot call method attempts\(\) on MonkeysLegion\\Queue\\Contracts\\JobInterface\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Integration/Driver/DatabaseQueueTest.php
+
+		-
+			message: '#^Offset ''exception'' might not exist on array\{id\: string, job\: string, payload\?\: array, attempts\?\: int, exception\?\: array, failed_at\: float\}\.$#'
+			identifier: offsetAccess.notFound
+			count: 2
+			path: tests/Integration/Driver/DatabaseQueueTest.php
+
+		-
+			message: '#^Parameter \#1 \$job of method MonkeysLegion\\Queue\\Driver\\DatabaseQueue\:\:ack\(\) expects MonkeysLegion\\Queue\\Contracts\\JobInterface, MonkeysLegion\\Queue\\Contracts\\JobInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Integration/Driver/DatabaseQueueTest.php
+
+		-
+			message: '#^Parameter \#1 \$job of method MonkeysLegion\\Queue\\Driver\\DatabaseQueue\:\:fail\(\) expects MonkeysLegion\\Queue\\Contracts\\JobInterface, MonkeysLegion\\Queue\\Contracts\\JobInterface\|null given\.$#'
+			identifier: argument.type
+			count: 6
+			path: tests/Integration/Driver/DatabaseQueueTest.php
+
+		-
+			message: '#^Parameter \#1 \$job of method MonkeysLegion\\Queue\\Driver\\DatabaseQueue\:\:release\(\) expects MonkeysLegion\\Queue\\Contracts\\JobInterface, MonkeysLegion\\Queue\\Contracts\\JobInterface\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: tests/Integration/Driver/DatabaseQueueTest.php
+
+		-
+			message: '#^Cannot call method attempts\(\) on MonkeysLegion\\Queue\\Contracts\\JobInterface\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Integration/Driver/RedisQueueBugFixTest.php
+
+		-
+			message: '#^Cannot call method getData\(\) on MonkeysLegion\\Queue\\Contracts\\JobInterface\|null\.$#'
+			identifier: method.nonObject
+			count: 3
+			path: tests/Integration/Driver/RedisQueueBugFixTest.php
+
+		-
+			message: '#^Offset ''queue'' does not exist on array\{id\: string, job\: string, payload\?\: array, attempts\?\: int, exception\?\: array, failed_at\: float\}\.$#'
+			identifier: offsetAccess.notFound
+			count: 1
+			path: tests/Integration/Driver/RedisQueueBugFixTest.php
+
+		-
+			message: '#^Parameter \#1 \$job of method MonkeysLegion\\Queue\\Driver\\RedisQueue\:\:ack\(\) expects MonkeysLegion\\Queue\\Contracts\\JobInterface, MonkeysLegion\\Queue\\Contracts\\JobInterface\|null given\.$#'
+			identifier: argument.type
+			count: 3
+			path: tests/Integration/Driver/RedisQueueBugFixTest.php
+
+		-
+			message: '#^Parameter \#1 \$job of method MonkeysLegion\\Queue\\Driver\\RedisQueue\:\:fail\(\) expects MonkeysLegion\\Queue\\Contracts\\JobInterface, MonkeysLegion\\Queue\\Contracts\\JobInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Integration/Driver/RedisQueueBugFixTest.php
+
+		-
+			message: '#^Parameter \#1 \$job of method MonkeysLegion\\Queue\\Driver\\RedisQueue\:\:release\(\) expects MonkeysLegion\\Queue\\Contracts\\JobInterface, MonkeysLegion\\Queue\\Contracts\\JobInterface\|null given\.$#'
+			identifier: argument.type
+			count: 4
+			path: tests/Integration/Driver/RedisQueueBugFixTest.php
+
+		-
+			message: '#^Parameter \#1 \$jobs of method MonkeysLegion\\Queue\\Driver\\RedisQueue\:\:bulk\(\) expects array\<array\{job\: string, payload\?\: array\}\>, array\{array\{job\: ''ValidJob'', payload\: array\{\}\}, array\{payload\: array\{invalid\: ''no job key''\}\}, array\{job\: ''AnotherValidJob'', payload\: array\{\}\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Integration/Driver/RedisQueueBugFixTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertIsArray\(\) with array\<int, array\{id\: string, job\: string, payload\?\: array, attempts\: int, created_at\: float\}\> will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Integration/Driver/RedisQueueExtendedTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertIsArray\(\) with array\<int, array\{id\: string, job\: string, payload\?\: array, attempts\?\: int, exception\?\: array, failed_at\: float\}\> will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Integration/Driver/RedisQueueExtendedTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertNull\(\) with array will always evaluate to false\.$#'
+			identifier: method.impossibleType
+			count: 1
+			path: tests/Integration/Driver/RedisQueueExtendedTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Integration/Driver/RedisQueueExtendedTest.php
+
+		-
+			message: '#^Cannot call method attempts\(\) on MonkeysLegion\\Queue\\Contracts\\JobInterface\|null\.$#'
+			identifier: method.nonObject
+			count: 3
+			path: tests/Integration/Driver/RedisQueueExtendedTest.php
+
+		-
+			message: '#^Cannot call method getData\(\) on MonkeysLegion\\Queue\\Contracts\\JobInterface\|null\.$#'
+			identifier: method.nonObject
+			count: 3
+			path: tests/Integration/Driver/RedisQueueExtendedTest.php
+
+		-
+			message: '#^Cannot call method getId\(\) on MonkeysLegion\\Queue\\Contracts\\JobInterface\|null\.$#'
+			identifier: method.nonObject
+			count: 3
+			path: tests/Integration/Driver/RedisQueueExtendedTest.php
+
+		-
+			message: '#^Offset ''exception'' might not exist on array\{id\: string, job\: string, payload\?\: array, attempts\?\: int, exception\?\: array, failed_at\: float\}\.$#'
+			identifier: offsetAccess.notFound
+			count: 3
+			path: tests/Integration/Driver/RedisQueueExtendedTest.php
+
+		-
+			message: '#^Parameter \#1 \$job of method MonkeysLegion\\Queue\\Driver\\RedisQueue\:\:fail\(\) expects MonkeysLegion\\Queue\\Contracts\\JobInterface, MonkeysLegion\\Queue\\Contracts\\JobInterface\|null given\.$#'
+			identifier: argument.type
+			count: 8
+			path: tests/Integration/Driver/RedisQueueExtendedTest.php
+
+		-
+			message: '#^Parameter \#1 \$job of method MonkeysLegion\\Queue\\Driver\\RedisQueue\:\:release\(\) expects MonkeysLegion\\Queue\\Contracts\\JobInterface, MonkeysLegion\\Queue\\Contracts\\JobInterface\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: tests/Integration/Driver/RedisQueueExtendedTest.php
+
+		-
+			message: '#^Cannot call method attempts\(\) on MonkeysLegion\\Queue\\Contracts\\JobInterface\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Integration/Driver/RedisQueueTest.php
+
+		-
+			message: '#^Offset ''exception'' might not exist on array\{id\: string, job\: string, payload\?\: array, attempts\?\: int, exception\?\: array, failed_at\: float\}\.$#'
+			identifier: offsetAccess.notFound
+			count: 1
+			path: tests/Integration/Driver/RedisQueueTest.php
+
+		-
+			message: '#^Parameter \#1 \$job of method MonkeysLegion\\Queue\\Driver\\RedisQueue\:\:ack\(\) expects MonkeysLegion\\Queue\\Contracts\\JobInterface, MonkeysLegion\\Queue\\Contracts\\JobInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Integration/Driver/RedisQueueTest.php
+
+		-
+			message: '#^Parameter \#1 \$job of method MonkeysLegion\\Queue\\Driver\\RedisQueue\:\:fail\(\) expects MonkeysLegion\\Queue\\Contracts\\JobInterface, MonkeysLegion\\Queue\\Contracts\\JobInterface\|null given\.$#'
+			identifier: argument.type
+			count: 6
+			path: tests/Integration/Driver/RedisQueueTest.php
+
+		-
+			message: '#^Parameter \#1 \$job of method MonkeysLegion\\Queue\\Driver\\RedisQueue\:\:release\(\) expects MonkeysLegion\\Queue\\Contracts\\JobInterface, MonkeysLegion\\Queue\\Contracts\\JobInterface\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: tests/Integration/Driver/RedisQueueTest.php
+
+		-
+			message: '#^Parameter \#1 \$job of method MonkeysLegion\\Queue\\Worker\\Worker\:\:process\(\) expects MonkeysLegion\\Queue\\Contracts\\JobInterface, MonkeysLegion\\Queue\\Contracts\\JobInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Integration/Workflow/FullWorkflowTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Tests\\Integration\\Workflow\\WorkflowTest\:\:driverProvider\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Integration/Workflow/WorkflowTest.php
+
+		-
+			message: '#^Unsafe access to private property MonkeysLegion\\Queue\\Tests\\Integration\\Workflow\\WorkflowTest\:\:\$redis through static\:\:\.$#'
+			identifier: staticClassAccess.privateProperty
+			count: 7
+			path: tests/Integration/Workflow/WorkflowTest.php
+
+		-
+			message: '#^Unsafe access to private property MonkeysLegion\\Queue\\Tests\\Integration\\Workflow\\WorkflowTest\:\:\$redisAvailable through static\:\:\.$#'
+			identifier: staticClassAccess.privateProperty
+			count: 3
+			path: tests/Integration/Workflow/WorkflowTest.php
+
+		-
+			message: '#^Call to an undefined method MonkeysLegion\\Queue\\Abstract\\AbstractQueue\:\:testEncodeJobData\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertIsArray\(\) with array\<string\> will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 2
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertIsArray\(\) with array\{ready\: int, processing\: int, delayed\: int, failed\: int, total_processed\?\: int, avg_processing_time\?\: float\} will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 2
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 5
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue\:\:removeFailedJobs\(\) invoked with 2 parameters, 1 required\.$#'
+			identifier: arguments.count
+			count: 2
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue@anonymous/tests/Unit/Abstract/AbstractQueueTest\.php\:171\:\:bulk\(\) has parameter \$jobs with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue@anonymous/tests/Unit/Abstract/AbstractQueueTest\.php\:171\:\:getFailed\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 2
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue@anonymous/tests/Unit/Abstract/AbstractQueueTest\.php\:171\:\:later\(\) has parameter \$jobData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue@anonymous/tests/Unit/Abstract/AbstractQueueTest\.php\:171\:\:listQueue\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue@anonymous/tests/Unit/Abstract/AbstractQueueTest\.php\:171\:\:push\(\) has parameter \$jobData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue@anonymous/tests/Unit/Abstract/AbstractQueueTest\.php\:18\:\:bulk\(\) has parameter \$jobs with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue@anonymous/tests/Unit/Abstract/AbstractQueueTest\.php\:18\:\:getFailed\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 2
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue@anonymous/tests/Unit/Abstract/AbstractQueueTest\.php\:18\:\:later\(\) has parameter \$jobData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue@anonymous/tests/Unit/Abstract/AbstractQueueTest\.php\:18\:\:listQueue\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue@anonymous/tests/Unit/Abstract/AbstractQueueTest\.php\:18\:\:push\(\) has parameter \$jobData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue@anonymous/tests/Unit/Abstract/AbstractQueueTest\.php\:18\:\:testEncodeJobData\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue@anonymous/tests/Unit/Abstract/AbstractQueueTest\.php\:258\:\:bulk\(\) has parameter \$jobs with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue@anonymous/tests/Unit/Abstract/AbstractQueueTest\.php\:258\:\:getFailed\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 2
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue@anonymous/tests/Unit/Abstract/AbstractQueueTest\.php\:258\:\:later\(\) has parameter \$jobData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue@anonymous/tests/Unit/Abstract/AbstractQueueTest\.php\:258\:\:listQueue\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue@anonymous/tests/Unit/Abstract/AbstractQueueTest\.php\:258\:\:push\(\) has parameter \$jobData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue@anonymous/tests/Unit/Abstract/AbstractQueueTest\.php\:320\:\:bulk\(\) has parameter \$jobs with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue@anonymous/tests/Unit/Abstract/AbstractQueueTest\.php\:320\:\:getFailed\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 2
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue@anonymous/tests/Unit/Abstract/AbstractQueueTest\.php\:320\:\:later\(\) has parameter \$jobData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue@anonymous/tests/Unit/Abstract/AbstractQueueTest\.php\:320\:\:listQueue\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue@anonymous/tests/Unit/Abstract/AbstractQueueTest\.php\:320\:\:push\(\) has parameter \$jobData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue@anonymous/tests/Unit/Abstract/AbstractQueueTest\.php\:498\:\:bulk\(\) has parameter \$jobs with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue@anonymous/tests/Unit/Abstract/AbstractQueueTest\.php\:498\:\:getFailed\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 2
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue@anonymous/tests/Unit/Abstract/AbstractQueueTest\.php\:498\:\:later\(\) has parameter \$jobData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue@anonymous/tests/Unit/Abstract/AbstractQueueTest\.php\:498\:\:listQueue\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue@anonymous/tests/Unit/Abstract/AbstractQueueTest\.php\:498\:\:push\(\) has parameter \$jobData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue@anonymous/tests/Unit/Abstract/AbstractQueueTest\.php\:77\:\:bulk\(\) has parameter \$jobs with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue@anonymous/tests/Unit/Abstract/AbstractQueueTest\.php\:77\:\:getFailed\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 2
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue@anonymous/tests/Unit/Abstract/AbstractQueueTest\.php\:77\:\:later\(\) has parameter \$jobData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue@anonymous/tests/Unit/Abstract/AbstractQueueTest\.php\:77\:\:listQueue\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Method MonkeysLegion\\Queue\\Abstract\\AbstractQueue@anonymous/tests/Unit/Abstract/AbstractQueueTest\.php\:77\:\:push\(\) has parameter \$jobData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Abstract/AbstractQueueTest.php
+
+		-
+			message: '#^Call to an undefined method MonkeysLegion\\Queue\\Contracts\\QueueInterface\:\:expects\(\)\.$#'
+			identifier: method.notFound
+			count: 4
+			path: tests/Unit/Chain/PendingChainTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertIsArray\(\) with array\<int, array\{id\: string, job\: string, payload\?\: array, attempts\: int, created_at\: float\}\> will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/Driver/NullQueueTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertIsArray\(\) with array\<int, array\{id\: string, job\: string, payload\?\: array, attempts\?\: int, exception\?\: array, failed_at\: float\}\> will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/Driver/NullQueueTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertIsArray\(\) with array\<string\> will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/Driver/NullQueueTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertIsArray\(\) with array\{ready\: int, processing\: int, delayed\: int, failed\: int, total_processed\?\: int, avg_processing_time\?\: float\} will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/Driver/NullQueueTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 8
+			path: tests/Unit/Driver/NullQueueTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/Events/QueueEventDispatcherTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertIsArray\(\) with array will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/Factory/QueueFactoryTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertIsArray\(\) with array\<string\> will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/Factory/QueueFactoryTest.php
+
+		-
+			message: '#^Property MonkeysLegion\\Queue\\Tests\\Unit\\Factory\\QueueFactoryTest\:\:\$config type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Factory/QueueFactoryTest.php
+
+		-
+			message: '#^Property MonkeysLegion\\Queue\\Tests\\Unit\\Helpers\\CliPrinterTest\:\:\$outputBuffer has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: tests/Unit/Helpers/CliPrinterTest.php
+
+		-
+			message: '#^Property MonkeysLegion\\Queue\\Tests\\Unit\\Helpers\\CliPrinterTest\:\:\$outputBuffer is unused\.$#'
+			identifier: property.unused
+			count: 1
+			path: tests/Unit/Helpers/CliPrinterTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertIsArray\(\) with array will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/Worker/WorkerTest.php

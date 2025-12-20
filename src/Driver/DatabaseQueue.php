@@ -30,7 +30,8 @@ class DatabaseQueue extends AbstractQueue
     {
         $queue = $queue ?? $this->defaultQueue;
 
-        $jobData = [
+        // Prepare job data - preserve all existing fields and merge with defaults
+        $jobData = array_merge($jobData, [
             'id' => $jobData['id'] ?? uniqid('job_', true),
             'job' => $jobData['job'] ?? null,
             'payload' => $jobData['payload'] ?? [],
@@ -38,15 +39,16 @@ class DatabaseQueue extends AbstractQueue
             'created_at' => $jobData['created_at'] ?? microtime(true),
             'queue' => $queue,
             'available_at' => $jobData['available_at'] ?? null,
-        ];
+        ]);
 
         try {
             // Insert job into the database table
+            // Store all job data including chain/batch metadata in payload
             $this->queryBuilder->insert($this->table, [
                 'id' => $jobData['id'],
                 'queue' => $queue,
                 'job' => $jobData['job'],
-                'payload' => json_encode($jobData['payload'], JSON_UNESCAPED_UNICODE),
+                'payload' => json_encode($jobData, JSON_UNESCAPED_UNICODE), // Store entire jobData as payload
                 'attempts' => $jobData['attempts'],
                 'created_at' => $jobData['created_at'],
                 'available_at' => $jobData['available_at'],
@@ -95,15 +97,18 @@ class DatabaseQueue extends AbstractQueue
             return null;
         }
 
-        $jobData = [
+        // Payload now contains the full job data including chain/batch metadata
+        $payloadData = is_string($jobRow['payload']) ? json_decode($jobRow['payload'], true) : [];
+
+        // Merge with row data, preferring payload values for chain/batch metadata
+        $jobData = array_merge($payloadData, [
             'id' => $jobRow['id'],
             'job' => $jobRow['job'],
-            'payload' => is_string($jobRow['payload']) ? json_decode($jobRow['payload'], true) : [],
             'attempts' => $jobRow['attempts'],
             'created_at' => $jobRow['created_at'],
             'queue' => $jobRow['queue'],
             'available_at' => $jobRow['available_at'],
-        ];
+        ]);
 
         return new Job($jobData, $this);
     }
@@ -204,7 +209,9 @@ class DatabaseQueue extends AbstractQueue
                     'job' => $row['job'],
                     'payload' => is_string($row['payload']) ? json_decode($row['payload'], true) : [],
                     'attempts' => $row['attempts'] ?? 0,
-                    'exception' => isset($row['exception']) && is_string($row['exception']) ? json_decode($row['exception'], true) : null,
+                    'exception' => isset($row['exception']) && is_string($row['exception'])
+                        ? json_decode($row['exception'], true)
+                        : null,
                     'failed_at' => $row['failed_at'],
                 ];
             }
@@ -228,12 +235,13 @@ class DatabaseQueue extends AbstractQueue
     public function count(string $queue = 'default'): int
     {
         try {
-            return (int) $this->queryBuilder
+            $count = (int) $this->queryBuilder
                 ->duplicate()
                 ->from($this->table)
                 ->where('queue', '=', $queue)
                 ->count();
             $this->queryBuilder->reset();
+            return $count;
         } catch (\Exception $e) {
             throw new \RuntimeException('Failed to count jobs in queue: ' . $e->getMessage());
         }
@@ -242,11 +250,12 @@ class DatabaseQueue extends AbstractQueue
     public function countFailed(): int
     {
         try {
-            return $this->queryBuilder
+            $count = (int) $this->queryBuilder
                 ->duplicate()
                 ->from($this->failedTable)
                 ->count();
             $this->queryBuilder->reset();
+            return $count;
         } catch (\Exception $e) {
             throw new \RuntimeException('Failed to count failed jobs: ' . $e->getMessage());
         }
@@ -486,8 +495,8 @@ class DatabaseQueue extends AbstractQueue
                 ->duplicate()
                 ->from($this->table)
                 ->where('queue', '=', $queue)
-                ->whereNotNull('available_at')
-                ->andWhere('available_at', '>', microtime(true))
+                ->whereNull('reserved_at')
+                ->where('available_at', '>', microtime(true))
                 ->whereNull('failed_at')
                 ->count();
 
@@ -505,7 +514,6 @@ class DatabaseQueue extends AbstractQueue
                 'failed'     => (int) $failed,
             ];
         } catch (\Throwable $e) {
-
             return [
                 'ready'      => 0,
                 'processing' => 0,

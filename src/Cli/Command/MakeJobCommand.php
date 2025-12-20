@@ -15,7 +15,8 @@ use MonkeysLegion\Cli\Console\Traits\Cli;
 #[CommandAttr('make:job', 'Generate a new Job class')]
 final class MakeJobCommand extends Command
 {
-    use MakerHelpers, Cli;
+    use MakerHelpers;
+    use Cli;
 
     public function handle(): int
     {

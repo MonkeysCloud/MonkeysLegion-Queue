@@ -63,10 +63,12 @@ abstract class AbstractQueue implements QueueInterface
      */
     public function retryFailed(int $limit = 100): void
     {
-        $this->cliLine()
-            ->warning("retryFailed() not implemented for this driver")
-            ->plain("FailedQueue={$this->failedQueue}, Limit={$limit}")
-            ->print();
+        if (!defined('PHPUNIT_RUNNING')) {
+            $this->cliLine()
+                ->warning("retryFailed() not implemented for this driver")
+                ->plain("FailedQueue={$this->failedQueue}, Limit={$limit}")
+                ->print();
+        }
     }
 
     /**
@@ -76,10 +78,12 @@ abstract class AbstractQueue implements QueueInterface
     {
         $ids = is_array($jobIds) ? $jobIds : [$jobIds];
 
-        $this->cliLine()
-            ->warning("removeFailedJobs() not implemented for this driver")
-            ->plain("JobCount=" . count($ids) . ", FailedQueue={$this->failedQueue}")
-            ->print();
+        if (!defined('PHPUNIT_RUNNING')) {
+            $this->cliLine()
+                ->warning("removeFailedJobs() not implemented for this driver")
+                ->plain("JobCount=" . count($ids) . ", FailedQueue={$this->failedQueue}")
+                ->print();
+        }
     }
 
     /**
@@ -87,10 +91,12 @@ abstract class AbstractQueue implements QueueInterface
      */
     public function peek(string $queue = 'default'): ?JobInterface
     {
-        $this->cliLine()
-            ->warning("peek() not implemented for this driver")
-            ->plain("Queue={$queue}")
-            ->print();
+        if (!defined('PHPUNIT_RUNNING')) {
+            $this->cliLine()
+                ->warning("peek() not implemented for this driver")
+                ->plain("Queue={$queue}")
+                ->print();
+        }
 
         return null;
     }
@@ -100,10 +106,12 @@ abstract class AbstractQueue implements QueueInterface
      */
     public function moveJobToQueue(string $jobId, string $fromQueue, string $toQueue): void
     {
-        $this->cliLine()
-            ->warning("moveJobToQueue() not implemented for this driver")
-            ->plain("JobID={$jobId}, From={$fromQueue}, To={$toQueue}")
-            ->print();
+        if (!defined('PHPUNIT_RUNNING')) {
+            $this->cliLine()
+                ->warning("moveJobToQueue() not implemented for this driver")
+                ->plain("JobID={$jobId}, From={$fromQueue}, To={$toQueue}")
+                ->print();
+        }
     }
 
     /**
@@ -111,10 +119,12 @@ abstract class AbstractQueue implements QueueInterface
      */
     public function processDelayedJobs(string $queue = 'default'): int
     {
-        $this->cliLine()
-            ->warning("processDelayedJobs() not implemented for this driver")
-            ->plain("Queue={$queue}")
-            ->print();
+        if (!defined('PHPUNIT_RUNNING')) {
+            $this->cliLine()
+                ->warning("processDelayedJobs() not implemented for this driver")
+                ->plain("Queue={$queue}")
+                ->print();
+        }
 
         return 0;
     }
@@ -137,10 +147,12 @@ abstract class AbstractQueue implements QueueInterface
      */
     public function findJob(string $jobId, string $queue = 'default'): ?JobInterface
     {
-        $this->cliLine()
-            ->warning("findJob() not implemented for this driver")
-            ->plain("JobID={$jobId}, Queue={$queue}")
-            ->print();
+        if (!defined('PHPUNIT_RUNNING')) {
+            $this->cliLine()
+                ->warning("findJob() not implemented for this driver")
+                ->plain("JobID={$jobId}, Queue={$queue}")
+                ->print();
+        }
 
         return null;
     }
@@ -150,10 +162,12 @@ abstract class AbstractQueue implements QueueInterface
      */
     public function deleteJob(string $jobId, string $queue = 'default'): bool
     {
-        $this->cliLine()
-            ->warning("deleteJob() not implemented for this driver")
-            ->plain("JobID={$jobId}, Queue={$queue}")
-            ->print();
+        if (!defined('PHPUNIT_RUNNING')) {
+            $this->cliLine()
+                ->warning("deleteJob() not implemented for this driver")
+                ->plain("JobID={$jobId}, Queue={$queue}")
+                ->print();
+        }
 
         return false;
     }

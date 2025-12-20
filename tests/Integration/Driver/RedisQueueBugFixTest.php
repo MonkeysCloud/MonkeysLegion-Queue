@@ -72,7 +72,7 @@ class RedisQueueBugFixTest extends TestCase
 
     /**
      * Test that ack() removes job from correct non-default processing queue
-     * 
+     *
      * Bug: ack() was using $this->defaultQueue instead of job's actual queue,
      * causing jobs from custom queues to remain stuck in processing lists
      */
@@ -305,7 +305,7 @@ class RedisQueueBugFixTest extends TestCase
 
     /**
      * Test bulk() respects configured prefix
-     * 
+     *
      * Bug: bulk() was using hard-coded "queue:{queue}" instead of
      * configured prefix, making bulked jobs invisible to other operations
      */

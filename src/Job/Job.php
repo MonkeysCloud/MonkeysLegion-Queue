@@ -29,13 +29,36 @@ class Job implements JobInterface
             throw new \RuntimeException("Job class '{$jobClass}' not found");
         }
 
-        // Instantiate the user’s actual job class
+        // Instantiate the user's actual job class
         $jobInstance = new $jobClass(...$payload);
 
         // Call its handle method
         if (method_exists($jobInstance, 'handle')) {
             $jobInstance->handle();
         }
+
+        // Dispatch next job in chain if present
+        $this->dispatchNextInChain();
+    }
+
+    /**
+     * Dispatch the next job in the chain, if any.
+     */
+    private function dispatchNextInChain(): void
+    {
+        $chain = $this->data['chain'] ?? [];
+        $chainQueue = $this->data['chain_queue'] ?? 'default';
+
+        if (empty($chain)) {
+            return;
+        }
+
+        // Get next job and remaining chain
+        $nextJobData = array_shift($chain);
+        $nextJobData['chain'] = $chain;
+        $nextJobData['chain_queue'] = $chainQueue;
+
+        $this->queue->push($nextJobData, $chainQueue);
     }
 
     public function getId(): string
@@ -55,11 +78,19 @@ class Job implements JobInterface
 
     /**
      * Get the raw job data array
-     * 
+     *
      * @return array
      */
     public function getData(): array
     {
         return $this->data;
+    }
+
+    /**
+     * Check if this job is part of a chain.
+     */
+    public function isChained(): bool
+    {
+        return !empty($this->data['chain']);
     }
 }
