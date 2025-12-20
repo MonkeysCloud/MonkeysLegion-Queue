@@ -2,20 +2,52 @@
 
 declare(strict_types=1);
 
-namespace MonkeysLegion\Queue\Tests\Unit\Batch;
+namespace MonkeysLegion\Queue\Tests\Integration\Batch;
 
 use MonkeysLegion\Queue\Batch\Batch;
 use MonkeysLegion\Queue\Batch\BatchRepository;
+use MonkeysLegion\Database\Contracts\ConnectionInterface;
+use MonkeysLegion\Database\SQLite\Connection;
 use PHPUnit\Framework\TestCase;
+use PDO;
 
 class BatchRepositoryTest extends TestCase
 {
+    private ConnectionInterface $connection;
     private BatchRepository $repository;
+    private string $table = 'job_batches';
 
     protected function setUp(): void
     {
-        $this->repository = new BatchRepository();
-        $this->repository->clear(); // Clear static storage between tests
+        $this->connection = new Connection([
+            'memory' => true,
+            'options' => [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            ]
+        ]);
+
+        $this->connection->pdo()->exec("
+            CREATE TABLE IF NOT EXISTS job_batches (
+                id VARCHAR(64) PRIMARY KEY,
+                name VARCHAR(255) NULL,
+                total_jobs INT NOT NULL,
+                pending_jobs INT NOT NULL,
+                failed_jobs INT NOT NULL,
+                failed_job_ids TEXT NULL,
+                options TEXT NULL,
+                cancelled_at DOUBLE NULL,
+                created_at DOUBLE NOT NULL,
+                finished_at DOUBLE NULL
+            );
+        ");
+
+        $this->repository = new BatchRepository($this->connection, $this->table);
+    }
+
+    protected function tearDown(): void
+    {
+        $this->connection->disconnect();
     }
 
     public function testStoreAndFindBatch(): void
@@ -27,6 +59,7 @@ class BatchRepositoryTest extends TestCase
         $found = $this->repository->find('batch-123');
         $this->assertNotNull($found);
         $this->assertEquals('batch-123', $found->id);
+        $this->assertEquals(5, $found->getTotalJobs());
     }
 
     public function testFindReturnsNullForNonExistentBatch(): void

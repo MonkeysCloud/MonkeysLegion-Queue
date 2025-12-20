@@ -16,5 +16,6 @@ class JobFailed
         public readonly string $queue,
         public readonly \Throwable $exception,
         public readonly bool $willRetry
-    ) {}
+    ) {
+    }
 }

@@ -26,7 +26,8 @@
   },
   "require-dev": {
     "phpstan/phpstan": "^2.1",
-    "phpunit/phpunit": "^12.2"
+    "phpunit/phpunit": "^12.2",
+    "squizlabs/php_codesniffer": "^4.0"
   },
   "authors": [
     {
@@ -38,6 +39,20 @@
       "email": "jorge@monkeys.cloud"
     }
   ],
+  "scripts": {
+    "test": "phpunit",
+    "test:unit": "phpunit --testsuite=Unit",
+    "test:integration": "phpunit --testsuite=Integration",
+    "test:coverage": "phpunit --coverage-html coverage",
+    "phpstan": "phpstan analyse src tests --level=8 --memory-limit=1G",
+    "cs": "phpcs --standard=PSR12 src tests",
+    "cs-fix": "phpcbf --standard=PSR12 src tests",
+    "check": [
+      "@cs",
+      "@phpstan",
+      "@test"
+    ]
+  },
   "minimum-stability": "dev",
   "prefer-stable": true,
   "require": {
@@ -47,4 +62,3 @@
     "monkeyscloud/monkeyslegion-query": "^1.0"
   }
 }
-

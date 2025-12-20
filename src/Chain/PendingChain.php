@@ -6,15 +6,18 @@ namespace MonkeysLegion\Queue\Chain;
 
 use MonkeysLegion\Queue\Contracts\DispatchableJobInterface;
 use MonkeysLegion\Queue\Contracts\QueueInterface;
+use MonkeysLegion\Queue\Traits\JobSerializer;
 
 /**
  * Fluent builder for job chains.
- * 
+ *
  * Jobs in a chain are executed sequentially - each job only runs
  * after the previous one completes successfully.
  */
 class PendingChain
 {
+    use JobSerializer;
+
     /** @var DispatchableJobInterface[] */
     private array $jobs = [];
     private string $queue = 'default';
@@ -22,7 +25,8 @@ class PendingChain
 
     public function __construct(
         private QueueInterface $queueDriver
-    ) {}
+    ) {
+    }
 
     /**
      * Add jobs to the chain.
@@ -70,30 +74,5 @@ class PendingChain
         $jobData['chain_queue'] = $this->queue;
 
         $this->queueDriver->push($jobData, $this->queue);
-    }
-
-    /**
-     * Serialize a job into an array format.
-     */
-    private function serializeJob(DispatchableJobInterface $job): array
-    {
-        $reflection = new \ReflectionClass($job);
-        $constructor = $reflection->getConstructor();
-        $payload = [];
-
-        if ($constructor) {
-            foreach ($constructor->getParameters() as $param) {
-                $name = $param->getName();
-                if ($reflection->hasProperty($name)) {
-                    $prop = $reflection->getProperty($name);
-                    $payload[$name] = $prop->getValue($job);
-                }
-            }
-        }
-
-        return [
-            'job' => get_class($job),
-            'payload' => $payload,
-        ];
     }
 }

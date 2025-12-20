@@ -140,7 +140,6 @@ class Worker implements WorkerInterface
 
             // Track batch completion if job is part of a batch
             $this->trackBatchCompletion($job, true);
-
         } catch (\Throwable $e) {
             $attempts = $job->attempts() + 1;
             $willRetry = $attempts < $this->maxTries;

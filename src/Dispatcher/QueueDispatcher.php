@@ -10,21 +10,24 @@ use MonkeysLegion\Queue\Chain\PendingChain;
 use MonkeysLegion\Queue\Contracts\QueueDispatcherInterface;
 use MonkeysLegion\Queue\Contracts\DispatchableJobInterface;
 use MonkeysLegion\Queue\Contracts\QueueInterface;
+use MonkeysLegion\Queue\Traits\JobSerializer;
 
 class QueueDispatcher implements QueueDispatcherInterface
 {
-    private ?BatchRepository $batchRepository = null;
+    use JobSerializer;
 
     public function __construct(
-        private QueueInterface $queueDriver
-    ) {}
+        private QueueInterface $queueDriver,
+        private ?BatchRepository $batchRepository = null
+    ) {
+    }
 
     public function dispatch(
         DispatchableJobInterface $job,
         string $queue = 'default',
         ?int $delay = null
     ): void {
-        $jobData = $this->buildPayload($job);
+        $jobData = $this->serializeJob($job);
         if ($delay) {
             $this->queueDriver->later($delay, $jobData, $queue);
         } else {
@@ -37,7 +40,7 @@ class QueueDispatcher implements QueueDispatcherInterface
         int $timestamp,
         string $queue = 'default'
     ): void {
-        $jobData = $this->buildPayload($job);
+        $jobData = $this->serializeJob($job);
         $this->queueDriver->later($timestamp - time(), $jobData, $queue);
     }
 
@@ -61,7 +64,7 @@ class QueueDispatcher implements QueueDispatcherInterface
     public function batch(array $jobs): PendingBatch
     {
         if ($this->batchRepository === null) {
-            $this->batchRepository = new BatchRepository($this->queueDriver);
+            throw new \RuntimeException('Batch repository is not configured.');
         }
         return (new PendingBatch($this->queueDriver, $this->batchRepository))->add($jobs);
     }
@@ -72,33 +75,8 @@ class QueueDispatcher implements QueueDispatcherInterface
     public function getBatchRepository(): BatchRepository
     {
         if ($this->batchRepository === null) {
-            $this->batchRepository = new BatchRepository($this->queueDriver);
+            throw new \RuntimeException('Batch repository is not configured.');
         }
         return $this->batchRepository;
     }
-
-    private function buildPayload(DispatchableJobInterface $job): array
-    {
-        $reflection = new \ReflectionClass($job);
-        $constructor = $reflection->getConstructor();
-        $payload = [];
-
-        if ($constructor) {
-            foreach ($constructor->getParameters() as $param) {
-                $name = $param->getName();
-                // get value from property if it exists
-                if ($reflection->hasProperty($name)) {
-                    $prop = $reflection->getProperty($name);
-                    $payload[$name] = $prop->getValue($job);
-                }
-            }
-        }
-
-        // Build jobData
-        return [
-            'job' => get_class($job),
-            'payload' => $payload,
-        ];
-    }
 }
-

@@ -15,16 +15,26 @@ class AbstractQueueTest extends TestCase
     protected function setUp(): void
     {
         // Create a concrete implementation for testing
-        $this->queue = new class([]) extends AbstractQueue {
-            public function push(array $jobData, string $queue = 'default'): void {}
+        $this->queue = new class ([]) extends AbstractQueue {
+            public function push(array $jobData, string $queue = 'default'): void
+            {
+            }
             public function pop(string $queue = 'default'): ?JobInterface
             {
                 return null;
             }
-            public function ack(JobInterface $job): void {}
-            public function release(JobInterface $job, int $delay = 0): void {}
-            public function fail(JobInterface $job, ?\Throwable $error = null): void {}
-            public function clear(string $queue = 'default'): void {}
+            public function ack(JobInterface $job): void
+            {
+            }
+            public function release(JobInterface $job, int $delay = 0): void
+            {
+            }
+            public function fail(JobInterface $job, ?\Throwable $error = null): void
+            {
+            }
+            public function clear(string $queue = 'default'): void
+            {
+            }
             public function listQueue(string $queue = 'default', int $limit = 100): array
             {
                 return [];
@@ -37,14 +47,22 @@ class AbstractQueueTest extends TestCase
             {
                 return [];
             }
-            public function clearFailed(): void {}
+            public function clearFailed(): void
+            {
+            }
             public function countFailed(): int
             {
                 return 0;
             }
-            public function purge(): void {}
-            public function later(int $delayInSeconds, array $jobData, string $queue = 'default'): void {}
-            public function bulk(array $jobs, string $queue = 'default'): void {}
+            public function purge(): void
+            {
+            }
+            public function later(int $delayInSeconds, array $jobData, string $queue = 'default'): void
+            {
+            }
+            public function bulk(array $jobs, string $queue = 'default'): void
+            {
+            }
 
             // Expose protected method for testing
             public function testEncodeJobData(array $data): string
@@ -56,16 +74,26 @@ class AbstractQueueTest extends TestCase
 
     public function testConstructorWithDefaultConfig(): void
     {
-        $queue = new class([]) extends AbstractQueue {
-            public function push(array $jobData, string $queue = 'default'): void {}
+        $queue = new class ([]) extends AbstractQueue {
+            public function push(array $jobData, string $queue = 'default'): void
+            {
+            }
             public function pop(string $queue = 'default'): ?JobInterface
             {
                 return null;
             }
-            public function ack(JobInterface $job): void {}
-            public function release(JobInterface $job, int $delay = 0): void {}
-            public function fail(JobInterface $job, ?\Throwable $error = null): void {}
-            public function clear(string $queue = 'default'): void {}
+            public function ack(JobInterface $job): void
+            {
+            }
+            public function release(JobInterface $job, int $delay = 0): void
+            {
+            }
+            public function fail(JobInterface $job, ?\Throwable $error = null): void
+            {
+            }
+            public function clear(string $queue = 'default'): void
+            {
+            }
             public function listQueue(string $queue = 'default', int $limit = 100): array
             {
                 return [];
@@ -78,14 +106,22 @@ class AbstractQueueTest extends TestCase
             {
                 return [];
             }
-            public function clearFailed(): void {}
+            public function clearFailed(): void
+            {
+            }
             public function countFailed(): int
             {
                 return 0;
             }
-            public function purge(): void {}
-            public function later(int $delayInSeconds, array $jobData, string $queue = 'default'): void {}
-            public function bulk(array $jobs, string $queue = 'default'): void {}
+            public function purge(): void
+            {
+            }
+            public function later(int $delayInSeconds, array $jobData, string $queue = 'default'): void
+            {
+            }
+            public function bulk(array $jobs, string $queue = 'default'): void
+            {
+            }
 
             public function getDefaultQueue(): string
             {
@@ -132,16 +168,26 @@ class AbstractQueueTest extends TestCase
             'max_attempts' => 5,
         ];
 
-        $queue = new class($config) extends AbstractQueue {
-            public function push(array $jobData, string $queue = 'default'): void {}
+        $queue = new class ($config) extends AbstractQueue {
+            public function push(array $jobData, string $queue = 'default'): void
+            {
+            }
             public function pop(string $queue = 'default'): ?JobInterface
             {
                 return null;
             }
-            public function ack(JobInterface $job): void {}
-            public function release(JobInterface $job, int $delay = 0): void {}
-            public function fail(JobInterface $job, ?\Throwable $error = null): void {}
-            public function clear(string $queue = 'default'): void {}
+            public function ack(JobInterface $job): void
+            {
+            }
+            public function release(JobInterface $job, int $delay = 0): void
+            {
+            }
+            public function fail(JobInterface $job, ?\Throwable $error = null): void
+            {
+            }
+            public function clear(string $queue = 'default'): void
+            {
+            }
             public function listQueue(string $queue = 'default', int $limit = 100): array
             {
                 return [];
@@ -154,14 +200,22 @@ class AbstractQueueTest extends TestCase
             {
                 return [];
             }
-            public function clearFailed(): void {}
+            public function clearFailed(): void
+            {
+            }
             public function countFailed(): int
             {
                 return 0;
             }
-            public function purge(): void {}
-            public function later(int $delayInSeconds, array $jobData, string $queue = 'default'): void {}
-            public function bulk(array $jobs, string $queue = 'default'): void {}
+            public function purge(): void
+            {
+            }
+            public function later(int $delayInSeconds, array $jobData, string $queue = 'default'): void
+            {
+            }
+            public function bulk(array $jobs, string $queue = 'default'): void
+            {
+            }
 
             public function getDefaultQueue(): string
             {
@@ -201,16 +255,26 @@ class AbstractQueueTest extends TestCase
     {
         $config = ['queue_prefix' => 'test_prefix'];
 
-        $queue = new class($config) extends AbstractQueue {
-            public function push(array $jobData, string $queue = 'default'): void {}
+        $queue = new class ($config) extends AbstractQueue {
+            public function push(array $jobData, string $queue = 'default'): void
+            {
+            }
             public function pop(string $queue = 'default'): ?JobInterface
             {
                 return null;
             }
-            public function ack(JobInterface $job): void {}
-            public function release(JobInterface $job, int $delay = 0): void {}
-            public function fail(JobInterface $job, ?\Throwable $error = null): void {}
-            public function clear(string $queue = 'default'): void {}
+            public function ack(JobInterface $job): void
+            {
+            }
+            public function release(JobInterface $job, int $delay = 0): void
+            {
+            }
+            public function fail(JobInterface $job, ?\Throwable $error = null): void
+            {
+            }
+            public function clear(string $queue = 'default'): void
+            {
+            }
             public function listQueue(string $queue = 'default', int $limit = 100): array
             {
                 return [];
@@ -223,14 +287,22 @@ class AbstractQueueTest extends TestCase
             {
                 return [];
             }
-            public function clearFailed(): void {}
+            public function clearFailed(): void
+            {
+            }
             public function countFailed(): int
             {
                 return 0;
             }
-            public function purge(): void {}
-            public function later(int $delayInSeconds, array $jobData, string $queue = 'default'): void {}
-            public function bulk(array $jobs, string $queue = 'default'): void {}
+            public function purge(): void
+            {
+            }
+            public function later(int $delayInSeconds, array $jobData, string $queue = 'default'): void
+            {
+            }
+            public function bulk(array $jobs, string $queue = 'default'): void
+            {
+            }
 
             public function getQueuePrefix(): string
             {
@@ -245,16 +317,26 @@ class AbstractQueueTest extends TestCase
     {
         $config = ['queue_prefix' => 'test_prefix:'];
 
-        $queue = new class($config) extends AbstractQueue {
-            public function push(array $jobData, string $queue = 'default'): void {}
+        $queue = new class ($config) extends AbstractQueue {
+            public function push(array $jobData, string $queue = 'default'): void
+            {
+            }
             public function pop(string $queue = 'default'): ?JobInterface
             {
                 return null;
             }
-            public function ack(JobInterface $job): void {}
-            public function release(JobInterface $job, int $delay = 0): void {}
-            public function fail(JobInterface $job, ?\Throwable $error = null): void {}
-            public function clear(string $queue = 'default'): void {}
+            public function ack(JobInterface $job): void
+            {
+            }
+            public function release(JobInterface $job, int $delay = 0): void
+            {
+            }
+            public function fail(JobInterface $job, ?\Throwable $error = null): void
+            {
+            }
+            public function clear(string $queue = 'default'): void
+            {
+            }
             public function listQueue(string $queue = 'default', int $limit = 100): array
             {
                 return [];
@@ -267,14 +349,22 @@ class AbstractQueueTest extends TestCase
             {
                 return [];
             }
-            public function clearFailed(): void {}
+            public function clearFailed(): void
+            {
+            }
             public function countFailed(): int
             {
                 return 0;
             }
-            public function purge(): void {}
-            public function later(int $delayInSeconds, array $jobData, string $queue = 'default'): void {}
-            public function bulk(array $jobs, string $queue = 'default'): void {}
+            public function purge(): void
+            {
+            }
+            public function later(int $delayInSeconds, array $jobData, string $queue = 'default'): void
+            {
+            }
+            public function bulk(array $jobs, string $queue = 'default'): void
+            {
+            }
 
             public function getQueuePrefix(): string
             {
@@ -405,16 +495,26 @@ class AbstractQueueTest extends TestCase
             'failed_queue' => 'my_failed',
         ];
 
-        $queue = new class($config) extends AbstractQueue {
-            public function push(array $jobData, string $queue = 'default'): void {}
+        $queue = new class ($config) extends AbstractQueue {
+            public function push(array $jobData, string $queue = 'default'): void
+            {
+            }
             public function pop(string $queue = 'default'): ?JobInterface
             {
                 return null;
             }
-            public function ack(JobInterface $job): void {}
-            public function release(JobInterface $job, int $delay = 0): void {}
-            public function fail(JobInterface $job, ?\Throwable $error = null): void {}
-            public function clear(string $queue = 'default'): void {}
+            public function ack(JobInterface $job): void
+            {
+            }
+            public function release(JobInterface $job, int $delay = 0): void
+            {
+            }
+            public function fail(JobInterface $job, ?\Throwable $error = null): void
+            {
+            }
+            public function clear(string $queue = 'default'): void
+            {
+            }
             public function listQueue(string $queue = 'default', int $limit = 100): array
             {
                 return [];
@@ -427,14 +527,22 @@ class AbstractQueueTest extends TestCase
             {
                 return [];
             }
-            public function clearFailed(): void {}
+            public function clearFailed(): void
+            {
+            }
             public function countFailed(): int
             {
                 return 0;
             }
-            public function purge(): void {}
-            public function later(int $delayInSeconds, array $jobData, string $queue = 'default'): void {}
-            public function bulk(array $jobs, string $queue = 'default'): void {}
+            public function purge(): void
+            {
+            }
+            public function later(int $delayInSeconds, array $jobData, string $queue = 'default'): void
+            {
+            }
+            public function bulk(array $jobs, string $queue = 'default'): void
+            {
+            }
         };
 
         $queues = $queue->getQueues();

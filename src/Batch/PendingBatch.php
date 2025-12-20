@@ -6,12 +6,15 @@ namespace MonkeysLegion\Queue\Batch;
 
 use MonkeysLegion\Queue\Contracts\DispatchableJobInterface;
 use MonkeysLegion\Queue\Contracts\QueueInterface;
+use MonkeysLegion\Queue\Traits\JobSerializer;
 
 /**
  * Fluent builder for job batches.
  */
 class PendingBatch
 {
+    use JobSerializer;
+
     /** @var DispatchableJobInterface[] */
     private array $jobs = [];
     private string $queue = 'default';
@@ -22,7 +25,8 @@ class PendingBatch
     public function __construct(
         private QueueInterface $queueDriver,
         private BatchRepository $repository
-    ) {}
+    ) {
+    }
 
     /**
      * Add jobs to the batch.
@@ -48,7 +52,7 @@ class PendingBatch
 
     /**
      * Register a callback for when all jobs complete successfully.
-     * 
+     *
      * @param string $callback Class name or "ClassName::method"
      */
     public function then(string $callback): self
@@ -59,7 +63,7 @@ class PendingBatch
 
     /**
      * Register a callback for when any job fails.
-     * 
+     *
      * @param string $callback Class name or "ClassName::method"
      */
     public function catch(string $callback): self
@@ -70,7 +74,7 @@ class PendingBatch
 
     /**
      * Register a callback that always runs when batch finishes.
-     * 
+     *
      * @param string $callback Class name or "ClassName::method"
      */
     public function finally(string $callback): self
@@ -110,30 +114,5 @@ class PendingBatch
         }
 
         return $batch;
-    }
-
-    /**
-     * Serialize a job into an array format.
-     */
-    private function serializeJob(DispatchableJobInterface $job): array
-    {
-        $reflection = new \ReflectionClass($job);
-        $constructor = $reflection->getConstructor();
-        $payload = [];
-
-        if ($constructor) {
-            foreach ($constructor->getParameters() as $param) {
-                $name = $param->getName();
-                if ($reflection->hasProperty($name)) {
-                    $prop = $reflection->getProperty($name);
-                    $payload[$name] = $prop->getValue($job);
-                }
-            }
-        }
-
-        return [
-            'job' => get_class($job),
-            'payload' => $payload,
-        ];
     }
 }

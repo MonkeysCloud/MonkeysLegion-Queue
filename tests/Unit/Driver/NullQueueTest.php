@@ -6,8 +6,10 @@ namespace MonkeysLegion\Queue\Tests\Unit\Driver;
 
 use MonkeysLegion\Queue\Driver\NullQueue;
 use MonkeysLegion\Queue\Contracts\JobInterface;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 
+#[AllowMockObjectsWithoutExpectations]
 class NullQueueTest extends TestCase
 {
     private NullQueue $queue;

@@ -78,7 +78,7 @@ class Job implements JobInterface
 
     /**
      * Get the raw job data array
-     * 
+     *
      * @return array
      */
     public function getData(): array
@@ -94,4 +94,3 @@ class Job implements JobInterface
         return !empty($this->data['chain']);
     }
 }
-

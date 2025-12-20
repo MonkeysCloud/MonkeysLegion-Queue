@@ -67,21 +67,44 @@ class MemoryQueue extends AbstractQueue
     // Helper for tests to process delayed
     public function moveDelayedToReady(string $queue = 'default'): void
     {
-        if (empty($this->delayed[$queue])) return;
-        
+        if (empty($this->delayed[$queue])) {
+            return;
+        }
+
         foreach ($this->delayed[$queue] as $key => $item) {
             $this->push($item['data'], $queue);
             unset($this->delayed[$queue][$key]);
         }
     }
-    
+
     // Required abstract methods
-    public function clear(string $queue = 'default'): void {}
-    public function listQueue(string $queue = 'default', int $limit = 100): array { return []; }
-    public function count(string $queue = 'default'): int { return count($this->jobs[$queue] ?? []); }
-    public function getFailed(int $limit = 100): array { return []; }
-    public function clearFailed(): void {}
-    public function countFailed(): int { return count($this->failed); }
-    public function purge(): void { $this->jobs = []; }
-    public function bulk(array $jobs, string $queue = 'default'): void {}
+    public function clear(string $queue = 'default'): void
+    {
+    }
+    public function listQueue(string $queue = 'default', int $limit = 100): array
+    {
+        return [];
+    }
+    public function count(string $queue = 'default'): int
+    {
+        return count($this->jobs[$queue] ?? []);
+    }
+    public function getFailed(int $limit = 100): array
+    {
+        return [];
+    }
+    public function clearFailed(): void
+    {
+    }
+    public function countFailed(): int
+    {
+        return count($this->failed);
+    }
+    public function purge(): void
+    {
+        $this->jobs = [];
+    }
+    public function bulk(array $jobs, string $queue = 'default'): void
+    {
+    }
 }

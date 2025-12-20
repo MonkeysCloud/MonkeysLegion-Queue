@@ -6,7 +6,7 @@ namespace MonkeysLegion\Queue\RateLimiter;
 
 /**
  * Token bucket rate limiter implementation.
- * 
+ *
  * Uses in-memory storage for simplicity. For distributed systems,
  * extend this class or implement RateLimiterInterface with Redis.
  */
@@ -22,7 +22,8 @@ class RateLimiter implements RateLimiterInterface
     public function __construct(
         private int $maxAttempts = 60,
         private int $decaySeconds = 60
-    ) {}
+    ) {
+    }
 
     public function attempt(string $key): bool
     {

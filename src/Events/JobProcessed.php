@@ -15,5 +15,6 @@ class JobProcessed
         public readonly JobInterface $job,
         public readonly string $queue,
         public readonly float $processingTimeMs
-    ) {}
+    ) {
+    }
 }

@@ -6,9 +6,11 @@ namespace MonkeysLegion\Queue\Tests\Unit\Job;
 
 use MonkeysLegion\Queue\Contracts\QueueInterface;
 use MonkeysLegion\Queue\Job\Job;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
+#[AllowMockObjectsWithoutExpectations]
 class JobTest extends TestCase
 {
     private QueueInterface&MockObject $mockQueue;

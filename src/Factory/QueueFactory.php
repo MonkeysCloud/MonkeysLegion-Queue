@@ -13,7 +13,7 @@ use Redis;
 
 /**
  * Queue Factory
- * 
+ *
  * Creates queue driver instances based on configuration.
  */
 class QueueFactory
@@ -39,7 +39,7 @@ class QueueFactory
 
     /**
      * Create a queue instance for a specific driver
-     * 
+     *
      * @param string $driver Driver name (redis, database, null)
      * @throws \InvalidArgumentException If driver is not supported
      */
@@ -149,7 +149,7 @@ class QueueFactory
 
     /**
      * Get available drivers
-     * 
+     *
      * @return array<string>
      */
     public function getAvailableDrivers(): array

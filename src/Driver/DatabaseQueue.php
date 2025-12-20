@@ -99,7 +99,7 @@ class DatabaseQueue extends AbstractQueue
 
         // Payload now contains the full job data including chain/batch metadata
         $payloadData = is_string($jobRow['payload']) ? json_decode($jobRow['payload'], true) : [];
-        
+
         // Merge with row data, preferring payload values for chain/batch metadata
         $jobData = array_merge($payloadData, [
             'id' => $jobRow['id'],
@@ -209,7 +209,9 @@ class DatabaseQueue extends AbstractQueue
                     'job' => $row['job'],
                     'payload' => is_string($row['payload']) ? json_decode($row['payload'], true) : [],
                     'attempts' => $row['attempts'] ?? 0,
-                    'exception' => isset($row['exception']) && is_string($row['exception']) ? json_decode($row['exception'], true) : null,
+                    'exception' => isset($row['exception']) && is_string($row['exception'])
+                        ? json_decode($row['exception'], true)
+                        : null,
                     'failed_at' => $row['failed_at'],
                 ];
             }
@@ -233,12 +235,13 @@ class DatabaseQueue extends AbstractQueue
     public function count(string $queue = 'default'): int
     {
         try {
-            return (int) $this->queryBuilder
+            $count = (int) $this->queryBuilder
                 ->duplicate()
                 ->from($this->table)
                 ->where('queue', '=', $queue)
                 ->count();
             $this->queryBuilder->reset();
+            return $count;
         } catch (\Exception $e) {
             throw new \RuntimeException('Failed to count jobs in queue: ' . $e->getMessage());
         }
@@ -247,11 +250,12 @@ class DatabaseQueue extends AbstractQueue
     public function countFailed(): int
     {
         try {
-            return $this->queryBuilder
+            $count = (int) $this->queryBuilder
                 ->duplicate()
                 ->from($this->failedTable)
                 ->count();
             $this->queryBuilder->reset();
+            return $count;
         } catch (\Exception $e) {
             throw new \RuntimeException('Failed to count failed jobs: ' . $e->getMessage());
         }
@@ -491,8 +495,8 @@ class DatabaseQueue extends AbstractQueue
                 ->duplicate()
                 ->from($this->table)
                 ->where('queue', '=', $queue)
-                ->whereNotNull('available_at')
-                ->andWhere('available_at', '>', microtime(true))
+                ->whereNull('reserved_at')
+                ->where('available_at', '>', microtime(true))
                 ->whereNull('failed_at')
                 ->count();
 
@@ -510,7 +514,6 @@ class DatabaseQueue extends AbstractQueue
                 'failed'     => (int) $failed,
             ];
         } catch (\Throwable $e) {
-
             return [
                 'ready'      => 0,
                 'processing' => 0,

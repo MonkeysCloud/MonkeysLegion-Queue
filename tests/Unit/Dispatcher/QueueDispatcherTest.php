@@ -23,9 +23,13 @@ class QueueDispatcherTest extends TestCase
 
     public function testDispatchPushesJobToQueue(): void
     {
-        $job = new class('test-data') implements DispatchableJobInterface {
-            public function __construct(public string $data) {}
-            public function handle(): void {}
+        $job = new class ('test-data') implements DispatchableJobInterface {
+            public function __construct(public string $data)
+            {
+            }
+            public function handle(): void
+            {
+            }
         };
 
         $this->mockQueue->expects($this->once())
@@ -44,7 +48,9 @@ class QueueDispatcherTest extends TestCase
     public function testDispatchWithDelayCallsLater(): void
     {
         $job = new class implements DispatchableJobInterface {
-            public function handle(): void {}
+            public function handle(): void
+            {
+            }
         };
 
         $this->mockQueue->expects($this->once())
@@ -63,7 +69,9 @@ class QueueDispatcherTest extends TestCase
     public function testDispatchToCustomQueue(): void
     {
         $job = new class implements DispatchableJobInterface {
-            public function handle(): void {}
+            public function handle(): void
+            {
+            }
         };
 
         $this->mockQueue->expects($this->once())
@@ -79,7 +87,9 @@ class QueueDispatcherTest extends TestCase
     public function testDispatchAtCalculatesDelay(): void
     {
         $job = new class implements DispatchableJobInterface {
-            public function handle(): void {}
+            public function handle(): void
+            {
+            }
         };
         $futureTime = time() + 120;
 
@@ -99,12 +109,15 @@ class QueueDispatcherTest extends TestCase
 
     public function testBuildPayloadExtractsConstructorArgs(): void
     {
-        $job = new class('arg1', 123) implements DispatchableJobInterface {
+        $job = new class ('arg1', 123) implements DispatchableJobInterface {
             public function __construct(
                 public string $param1,
                 public int $param2
-            ) {}
-            public function handle(): void {}
+            ) {
+            }
+            public function handle(): void
+            {
+            }
         };
 
         $this->mockQueue->expects($this->once())

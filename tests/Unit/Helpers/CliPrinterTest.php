@@ -15,13 +15,13 @@ class CliPrinterTest extends TestCase
 
     public function testPrintCliMessageRunsWithoutError(): void
     {
-        $this->expectNotToPerformAssertions();
+        $this->expectOutputRegex('/Test Message/');
         CliPrinter::printCliMessage('Test Message', [], 'info');
     }
 
     public function testPrintCliMessageWithContextRunsWithoutError(): void
     {
-        $this->expectNotToPerformAssertions();
+        $this->expectOutputRegex('/Job Processed/');
         CliPrinter::printCliMessage('Job Processed', [
             'job_id' => '12345',
             'queue' => 'default'
@@ -30,7 +30,7 @@ class CliPrinterTest extends TestCase
 
     public function testPrintCliMessageWithDifferentLevelsRunsWithoutError(): void
     {
-        $this->expectNotToPerformAssertions();
+        $this->expectOutputRegex('/Error.*Warning.*Processing/s');
         CliPrinter::printCliMessage('Error', [], 'error');
         CliPrinter::printCliMessage('Warning', [], 'warning');
         CliPrinter::printCliMessage('Processing', [], 'processing');

@@ -14,5 +14,6 @@ class BatchCompleted
     public function __construct(
         public readonly Batch $batch,
         public readonly bool $successful
-    ) {}
+    ) {
+    }
 }

@@ -9,7 +9,7 @@ use MonkeysLegion\Queue\Contracts\JobInterface;
 
 /**
  * Null Queue Driver
- * 
+ *
  * A no-op queue implementation that discards all jobs.
  * Useful for testing, development, or temporarily disabling queues.
  */

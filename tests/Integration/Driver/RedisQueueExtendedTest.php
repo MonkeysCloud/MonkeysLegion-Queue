@@ -6,6 +6,7 @@ namespace MonkeysLegion\Queue\Tests\Integration\Driver;
 
 use MonkeysLegion\Queue\Driver\RedisQueue;
 use MonkeysLegion\Queue\Contracts\JobInterface;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 use Redis;
 
@@ -99,6 +100,7 @@ class RedisQueueExtendedTest extends TestCase
         $this->assertEquals('Job3', $job3->getData()['job']);
     }
 
+    #[AllowMockObjectsWithoutExpectations]
     public function testAckingNonExistentJobDoesNotThrow(): void
     {
         $mockJob = $this->createMock(JobInterface::class);

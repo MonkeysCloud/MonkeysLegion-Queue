@@ -593,6 +593,12 @@ $count = $queue->count(); // Returns 0
 src/
 ├── Abstract/
 │   └── AbstractQueue.php        # Base queue implementation
+├── Batch/
+│   ├── Batch.php               # Batch state container
+│   ├── BatchRepository.php     # Database-backed batch storage
+│   └── PendingBatch.php        # Fluent batch builder
+├── Chain/
+│   └── PendingChain.php        # Job chain builder
 ├── Cli/
 │   └── Command/                 # CLI commands
 │       ├── MakeJobCommand.php
@@ -608,15 +614,22 @@ src/
 │   ├── DispatcherInterface.php  # Job dispatcher contract
 │   ├── QueueInterface.php       # Queue driver contract
 │   └── WorkerInterface.php      # Worker contract
+├── Dispatcher/
+│   └── QueueDispatcher.php     # Job dispatcher
 ├── Driver/
+│   ├── DatabaseQueue.php       # Database implementation
 │   ├── RedisQueue.php          # Redis implementation
 │   └── NullQueue.php           # Null implementation
+├── Events/
+│   └── QueueEventDispatcher.php # Event system
 ├── Factory/
 │   └── QueueFactory.php        # Queue factory
 ├── Helpers/
 │   └── CliPrinter.php          # CLI output helper
 ├── Job/
 │   └── Job.php                 # Job wrapper
+├── RateLimiter/
+│   └── RateLimiter.php         # Rate limiting
 └── Worker/
     └── Worker.php              # Queue worker
 ```

@@ -208,7 +208,9 @@ class RedisQueue extends AbstractQueue
 
         try {
             $jobs = $this->redis->lRange($failedKey, 0, $limit - 1);
-            if (!is_array($jobs)) $jobs = [];
+            if (!is_array($jobs)) {
+                $jobs = [];
+            }
 
             $decodedJobs = array_map(
                 fn($job) => is_string($job) ? json_decode($job, true) : null,
@@ -375,10 +377,14 @@ class RedisQueue extends AbstractQueue
             }
 
             foreach ($jobs as $jobJson) {
-                if (!is_string($jobJson)) continue;
+                if (!is_string($jobJson)) {
+                    continue;
+                }
 
                 $failedJobData = json_decode($jobJson, true);
-                if (!$failedJobData || !isset($failedJobData['job'])) continue;
+                if (!$failedJobData || !isset($failedJobData['job'])) {
+                    continue;
+                }
 
                 $this->redis->lRem($failedKey, $jobJson, 1);
 
@@ -408,10 +414,14 @@ class RedisQueue extends AbstractQueue
             }
 
             foreach ($jobs as $jobJson) {
-                if (!is_string($jobJson)) continue;
+                if (!is_string($jobJson)) {
+                    continue;
+                }
 
                 $jobData = json_decode($jobJson, true);
-                if (!$jobData || !isset($jobData['id'])) continue;
+                if (!$jobData || !isset($jobData['id'])) {
+                    continue;
+                }
 
                 if (in_array($jobData['id'], $ids, true)) {
                     $this->redis->lRem($failedKey, $jobJson, 1);
@@ -465,10 +475,14 @@ class RedisQueue extends AbstractQueue
             }
 
             foreach ($jobs as $jobJson) {
-                if (!is_string($jobJson)) continue;
+                if (!is_string($jobJson)) {
+                    continue;
+                }
 
                 $jobData = json_decode($jobJson, true);
-                if (!$jobData || !isset($jobData['id'])) continue;
+                if (!$jobData || !isset($jobData['id'])) {
+                    continue;
+                }
 
                 if ($jobData['id'] === $jobId) {
                     // Update queue name in job data
@@ -502,7 +516,9 @@ class RedisQueue extends AbstractQueue
             $movedCount = 0;
 
             foreach ($jobs as $jobJson) {
-                if (!is_string($jobJson)) continue;
+                if (!is_string($jobJson)) {
+                    continue;
+                }
 
                 $this->redis->lPush($queueKey, $jobJson);
                 $this->redis->zRem($delayedKey, $jobJson);
@@ -552,7 +568,9 @@ class RedisQueue extends AbstractQueue
             $jobs = $this->redis->lRange($queueKey, 0, -1);
             if (is_array($jobs)) {
                 foreach ($jobs as $jobJson) {
-                    if (!is_string($jobJson)) continue;
+                    if (!is_string($jobJson)) {
+                        continue;
+                    }
                     $jobData = json_decode($jobJson, true);
                     if ($jobData && isset($jobData['id']) && $jobData['id'] === $jobId) {
                         $jobData['queue'] = $jobData['queue'] ?? $queue;
@@ -565,7 +583,9 @@ class RedisQueue extends AbstractQueue
             $jobs = $this->redis->lRange($processingKey, 0, -1);
             if (is_array($jobs)) {
                 foreach ($jobs as $jobJson) {
-                    if (!is_string($jobJson)) continue;
+                    if (!is_string($jobJson)) {
+                        continue;
+                    }
                     $jobData = json_decode($jobJson, true);
                     if ($jobData && isset($jobData['id']) && $jobData['id'] === $jobId) {
                         $jobData['queue'] = $jobData['queue'] ?? $queue;
@@ -578,7 +598,9 @@ class RedisQueue extends AbstractQueue
             $jobs = $this->redis->zRange($delayedKey, 0, -1);
             if (is_array($jobs)) {
                 foreach ($jobs as $jobJson) {
-                    if (!is_string($jobJson)) continue;
+                    if (!is_string($jobJson)) {
+                        continue;
+                    }
                     $jobData = json_decode($jobJson, true);
                     if ($jobData && isset($jobData['id']) && $jobData['id'] === $jobId) {
                         $jobData['queue'] = $jobData['queue'] ?? $queue;
@@ -607,7 +629,9 @@ class RedisQueue extends AbstractQueue
             $jobs = $this->redis->lRange($queueKey, 0, -1);
             if (is_array($jobs)) {
                 foreach ($jobs as $jobJson) {
-                    if (!is_string($jobJson)) continue;
+                    if (!is_string($jobJson)) {
+                        continue;
+                    }
                     $jobData = json_decode($jobJson, true);
                     if ($jobData && isset($jobData['id']) && $jobData['id'] === $jobId) {
                         $this->redis->lRem($queueKey, $jobJson, 1);
@@ -622,7 +646,9 @@ class RedisQueue extends AbstractQueue
                 $jobs = $this->redis->lRange($processingKey, 0, -1);
                 if (is_array($jobs)) {
                     foreach ($jobs as $jobJson) {
-                        if (!is_string($jobJson)) continue;
+                        if (!is_string($jobJson)) {
+                            continue;
+                        }
                         $jobData = json_decode($jobJson, true);
                         if ($jobData && isset($jobData['id']) && $jobData['id'] === $jobId) {
                             $this->redis->lRem($processingKey, $jobJson, 1);
@@ -638,7 +664,9 @@ class RedisQueue extends AbstractQueue
                 $jobs = $this->redis->zRange($delayedKey, 0, -1);
                 if (is_array($jobs)) {
                     foreach ($jobs as $jobJson) {
-                        if (!is_string($jobJson)) continue;
+                        if (!is_string($jobJson)) {
+                            continue;
+                        }
                         $jobData = json_decode($jobJson, true);
                         if ($jobData && isset($jobData['id']) && $jobData['id'] === $jobId) {
                             $this->redis->zRem($delayedKey, $jobJson);
@@ -667,7 +695,9 @@ class RedisQueue extends AbstractQueue
 
             $queues = [];
             foreach ($keys as $key) {
-                if (!is_string($key)) continue;
+                if (!is_string($key)) {
+                    continue;
+                }
 
                 // Remove prefix and extract queue name
                 $queueName = str_replace($this->queuePrefix, '', $key);

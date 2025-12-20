@@ -122,9 +122,24 @@ class Batch
     }
 
     // Getters
-    public function getTotalJobs(): int { return $this->totalJobs; }
-    public function getPendingJobs(): int { return $this->pendingJobs; }
-    public function getFailedJobs(): int { return $this->failedJobs; }
-    public function getFailedJobIds(): array { return $this->failedJobIds; }
-    public function getFinishedAt(): ?float { return $this->finishedAt; }
+    public function getTotalJobs(): int
+    {
+        return $this->totalJobs;
+    }
+    public function getPendingJobs(): int
+    {
+        return $this->pendingJobs;
+    }
+    public function getFailedJobs(): int
+    {
+        return $this->failedJobs;
+    }
+    public function getFailedJobIds(): array
+    {
+        return $this->failedJobIds;
+    }
+    public function getFinishedAt(): ?float
+    {
+        return $this->finishedAt;
+    }
 }

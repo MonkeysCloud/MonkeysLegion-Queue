@@ -11,7 +11,9 @@ class IntegrationTestJob implements DispatchableJobInterface
     public static bool $handled = false;
     public static string $receivedData = '';
 
-    public function __construct(public string $data) {}
+    public function __construct(public string $data)
+    {
+    }
 
     public function handle(): void
     {

@@ -9,8 +9,10 @@ use MonkeysLegion\Queue\Events\JobFailed;
 use MonkeysLegion\Queue\Events\JobProcessed;
 use MonkeysLegion\Queue\Events\JobProcessing;
 use MonkeysLegion\Queue\Events\QueueEventDispatcher;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 
+#[AllowMockObjectsWithoutExpectations]
 class QueueEventDispatcherTest extends TestCase
 {
     private QueueEventDispatcher $dispatcher;

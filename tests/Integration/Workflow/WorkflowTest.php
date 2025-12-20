@@ -11,29 +11,12 @@ use MonkeysLegion\Queue\Worker\Worker;
 use MonkeysLegion\Database\SQLite\Connection as SQLiteConnection;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use MonkeysLegion\Queue\Tests\Fixtures\SuccessfulTestJob;
+use MonkeysLegion\Queue\Tests\Fixtures\FailingTestJob;
 use Redis;
+use RedisException;
 
-// Define test job classes outside of the test method
-class SuccessfulTestJob
-{
-    public static bool $handled = false;
-    
-    public function handle(): void
-    {
-        SuccessfulTestJob::$handled = true;
-    }
-}
-
-class FailingTestJob
-{
-    public static bool $attempted = false;
-    
-    public function handle(): void
-    {
-        FailingTestJob::$attempted = true;
-        throw new \RuntimeException('Job failed intentionally');
-    }
-}
+// Classes moved to Fixtures
 
 class WorkflowTest extends TestCase
 {
@@ -68,7 +51,7 @@ class WorkflowTest extends TestCase
     public static function driverProvider(): array
     {
         $drivers = [];
-        
+
         // Database driver
         try {
             $conn = new SQLiteConnection([
@@ -92,7 +75,7 @@ class WorkflowTest extends TestCase
                     failed_at DOUBLE NULL
                 );
             ");
-            
+
             $conn->pdo()->exec("
                 CREATE TABLE failed_jobs (
                     id VARCHAR(64) PRIMARY KEY,
@@ -118,7 +101,7 @@ class WorkflowTest extends TestCase
                 $redis = new Redis();
                 $redis->connect('127.0.0.1', 6379);
                 $redis->select(15);
-                
+
                 $keys = $redis->keys('workflow_test*');
                 if (!empty($keys)) {
                     $redis->del($keys);
@@ -145,7 +128,7 @@ class WorkflowTest extends TestCase
     {
         // Test successful job
         SuccessfulTestJob::$handled = false;
-        
+
         $queue->push([
             'job' => SuccessfulTestJob::class,
             'payload' => []
@@ -156,12 +139,13 @@ class WorkflowTest extends TestCase
         $job = $queue->pop();
         $this->assertInstanceOf(JobInterface::class, $job);
 
+        $this->expectOutputRegex('/Processing/');
         $worker->process($job);
         $this->assertTrue(SuccessfulTestJob::$handled);
 
         // Test failing job
         FailingTestJob::$attempted = false;
-        
+
         $queue->push([
             'job' => FailingTestJob::class,
             'payload' => []
