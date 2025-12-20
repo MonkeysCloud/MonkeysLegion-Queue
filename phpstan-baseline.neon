@@ -67,18 +67,6 @@ parameters:
 			path: src/Chain/PendingChain.php
 
 		-
-			message: '#^Property MonkeysLegion\\Queue\\Chain\\PendingChain\:\:\$connection \(string\|null\) is never assigned string so it can be removed from the property type\.$#'
-			identifier: property.unusedType
-			count: 1
-			path: src/Chain/PendingChain.php
-
-		-
-			message: '#^Property MonkeysLegion\\Queue\\Chain\\PendingChain\:\:\$connection is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: src/Chain/PendingChain.php
-
-		-
 			message: '#^Parameter \#3 \$subject of function str_replace expects array\<string\>\|string, string\|null given\.$#'
 			identifier: argument.type
 			count: 1
@@ -533,12 +521,6 @@ parameters:
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/Factory/QueueFactory.php
-
-		-
-			message: '#^Access to an undefined property MonkeysLegion\\Queue\\Helpers\\CliPrinter\:\:\$outputBuffer\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Helpers/CliPrinter.php
 
 		-
 			message: '#^Method MonkeysLegion\\Queue\\Job\\Job\:\:__construct\(\) has parameter \$data with no value type specified in iterable type array\.$#'
