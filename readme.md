@@ -26,6 +26,25 @@ A robust, feature-rich queue system for PHP applications with support for multip
 - Priority queue support (process queues in order)
 - Clean dispatcher API for job dispatching
 
+🔗 **Job Batching & Chaining**
+
+- Group jobs into batches with completion callbacks
+- Chain jobs for sequential execution
+- Track batch progress and handle failures
+
+⚡ **Rate Limiting**
+
+- Token bucket rate limiter
+- Per-queue or per-job-type throttling
+- Configurable limits and decay windows
+
+🎯 **Queue Events**
+
+- `JobProcessing` - Before job execution
+- `JobProcessed` - After successful completion
+- `JobFailed` - On job failure
+- `BatchCompleted` - When batch finishes
+
 📊 **Monitoring & Management**
 
 - Real-time queue statistics
@@ -416,6 +435,90 @@ $queue->clearFailed();
 
 ## Advanced Usage
 
+### Job Chaining
+
+Run jobs sequentially - each job only starts after the previous completes:
+
+```php
+use MonkeysLegion\Queue\Dispatcher\QueueDispatcher;
+
+$dispatcher = new QueueDispatcher($queue);
+
+$dispatcher->chain([
+    new DownloadFileJob($url),
+    new ProcessFileJob($path),
+    new NotifyUserJob($userId),
+])->onQueue('files')->dispatch();
+```
+
+### Job Batching
+
+Group multiple jobs and track their collective completion:
+
+```php
+$batch = $dispatcher->batch([
+    new ProcessImageJob($image1),
+    new ProcessImageJob($image2),
+    new ProcessImageJob($image3),
+])
+->onQueue('images')
+->then('App\\Callbacks\\BatchSuccess')
+->catch('App\\Callbacks\\BatchFailed')
+->finally('App\\Callbacks\\BatchComplete')
+->dispatch();
+
+// Check batch status
+echo $batch->progress() . '% complete';
+echo $batch->getPendingJobs() . ' jobs remaining';
+```
+
+### Rate Limiting
+
+Throttle job processing to prevent overload:
+
+```php
+use MonkeysLegion\Queue\RateLimiter\RateLimiter;
+use MonkeysLegion\Queue\Worker\Worker;
+
+$rateLimiter = new RateLimiter(
+    maxAttempts: 60,    // Max 60 jobs
+    decaySeconds: 60    // Per minute
+);
+
+$worker = new Worker(
+    queue: $queue,
+    rateLimiter: $rateLimiter
+);
+```
+
+### Queue Events
+
+Listen for job lifecycle events:
+
+```php
+use MonkeysLegion\Queue\Events\QueueEventDispatcher;
+use MonkeysLegion\Queue\Events\JobProcessed;
+use MonkeysLegion\Queue\Events\JobFailed;
+
+$events = new QueueEventDispatcher();
+
+$events->listen(JobProcessed::class, function ($event) {
+    Log::info("Job {$event->job->getId()} completed in {$event->processingTimeMs}ms");
+});
+
+$events->listen(JobFailed::class, function ($event) {
+    Log::error("Job failed: " . $event->exception->getMessage());
+    if (!$event->willRetry) {
+        // Final failure - notify admin
+    }
+});
+
+$worker = new Worker(
+    queue: $queue,
+    eventDispatcher: $events
+);
+```
+
 ### Custom Worker
 
 ```php
@@ -432,7 +535,9 @@ $worker = new Worker(
     maxTries: 5,
     memory: 256,
     timeout: 120,
-    delayedCheckInterval: 30
+    delayedCheckInterval: 30,
+    eventDispatcher: $events,
+    rateLimiter: $rateLimiter
 );
 
 // Start processing
@@ -571,10 +676,10 @@ For issues, questions, or suggestions, please open an issue on GitHub.
 ## Roadmap
 
 - [x] Priority queues
-- [ ] Job batching
-- [ ] Job chaining
-- [ ] Rate limiting
-- [ ] Queue events/hooks
+- [x] Job batching
+- [x] Job chaining
+- [x] Rate limiting
+- [x] Queue events/hooks
 - [ ] Dashboard UI
 - [ ] Metrics & analytics
 

@@ -10,6 +10,8 @@ use MonkeysLegion\Queue\Worker\Worker;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
 
+require_once __DIR__ . '/WorkerFunctionsMock.php';
+
 class WorkerTest extends TestCase
 {
     private QueueInterface&MockObject $mockQueue;
