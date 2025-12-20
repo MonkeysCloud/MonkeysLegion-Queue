@@ -30,7 +30,8 @@ class DatabaseQueue extends AbstractQueue
     {
         $queue = $queue ?? $this->defaultQueue;
 
-        $jobData = [
+        // Prepare job data - preserve all existing fields and merge with defaults
+        $jobData = array_merge($jobData, [
             'id' => $jobData['id'] ?? uniqid('job_', true),
             'job' => $jobData['job'] ?? null,
             'payload' => $jobData['payload'] ?? [],
@@ -38,15 +39,16 @@ class DatabaseQueue extends AbstractQueue
             'created_at' => $jobData['created_at'] ?? microtime(true),
             'queue' => $queue,
             'available_at' => $jobData['available_at'] ?? null,
-        ];
+        ]);
 
         try {
             // Insert job into the database table
+            // Store all job data including chain/batch metadata in payload
             $this->queryBuilder->insert($this->table, [
                 'id' => $jobData['id'],
                 'queue' => $queue,
                 'job' => $jobData['job'],
-                'payload' => json_encode($jobData['payload'], JSON_UNESCAPED_UNICODE),
+                'payload' => json_encode($jobData, JSON_UNESCAPED_UNICODE), // Store entire jobData as payload
                 'attempts' => $jobData['attempts'],
                 'created_at' => $jobData['created_at'],
                 'available_at' => $jobData['available_at'],
@@ -95,15 +97,18 @@ class DatabaseQueue extends AbstractQueue
             return null;
         }
 
-        $jobData = [
+        // Payload now contains the full job data including chain/batch metadata
+        $payloadData = is_string($jobRow['payload']) ? json_decode($jobRow['payload'], true) : [];
+        
+        // Merge with row data, preferring payload values for chain/batch metadata
+        $jobData = array_merge($payloadData, [
             'id' => $jobRow['id'],
             'job' => $jobRow['job'],
-            'payload' => is_string($jobRow['payload']) ? json_decode($jobRow['payload'], true) : [],
             'attempts' => $jobRow['attempts'],
             'created_at' => $jobRow['created_at'],
             'queue' => $jobRow['queue'],
             'available_at' => $jobRow['available_at'],
-        ];
+        ]);
 
         return new Job($jobData, $this);
     }

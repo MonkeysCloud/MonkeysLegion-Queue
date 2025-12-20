@@ -25,15 +25,15 @@ class RedisQueue extends AbstractQueue
         $queue = $queue ?? $this->defaultQueue;
         $queueKey = $this->queuePrefix . $queue;
 
-        // Prepare job data - preserve existing id and attempts if present
-        $jobData = [
+        // Prepare job data - preserve all existing fields and merge with defaults
+        $jobData = array_merge($jobData, [
             'id' => $jobData['id'] ?? uniqid('job_', true),
             'job' => $jobData['job'] ?? null,
             'payload' => $jobData['payload'] ?? [],
             'attempts' => $jobData['attempts'] ?? 0,
             'created_at' => $jobData['created_at'] ?? microtime(true),
             'queue' => $queue, // Store the queue name so we can track where this job belongs
-        ];
+        ]);
 
         try {
             $result = $this->redis->lPush($queueKey, $this->encodeJobData($jobData));
@@ -276,18 +276,16 @@ class RedisQueue extends AbstractQueue
             throw new \InvalidArgumentException("later() requires 'job' to be defined");
         }
 
-        // Build proper job structure (preserve payload and existing data)
-        $payload = $jobData['payload'] ?? [];
-
-        $job = [
+        // Build proper job structure - preserve all existing fields and merge with defaults
+        $job = array_merge($jobData, [
             'id'         => $jobData['id'] ?? uniqid('job_', true),
             'job'        => $jobData['job'],
-            'payload'    => $payload,
+            'payload'    => $jobData['payload'] ?? [],
             'attempts'   => $jobData['attempts'] ?? 0,
             'created_at' => $jobData['created_at'] ?? microtime(true),
             'available_at' => $runAt,
             'queue'      => $queue, // Track queue name
-        ];
+        ]);
 
         try {
             $encoded = $this->encodeJobData($job);
