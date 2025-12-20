@@ -18,7 +18,6 @@ class PendingChain
     /** @var DispatchableJobInterface[] */
     private array $jobs = [];
     private string $queue = 'default';
-    private ?string $connection = null;
 
     public function __construct(
         private QueueInterface $queueDriver
