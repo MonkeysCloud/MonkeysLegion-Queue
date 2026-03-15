@@ -73,6 +73,11 @@ class Worker implements WorkerInterface
             }
 
             if (!$job) {
+                // If queue is empty, trigger GC to free memory
+                if (function_exists('gc_collect_cycles')) {
+                    gc_collect_cycles();
+                }
+
                 sleep($this->sleep);
                 continue;
             }
@@ -96,6 +101,11 @@ class Worker implements WorkerInterface
             $this->currentQueue = $job->getData()['queue'] ?? 'default';
             $this->process($job);
             $this->processedJobs++;
+
+            // Proactively trigger GC every 100 jobs to manage memory
+            if ($this->processedJobs % 100 === 0 && function_exists('gc_collect_cycles')) {
+                gc_collect_cycles();
+            }
         }
 
         CliPrinter::printCliMessage("Worker stopped", [

@@ -376,6 +376,8 @@ class RedisQueue extends AbstractQueue
                 return;
             }
 
+            $this->redis->multi();
+
             foreach ($jobs as $jobJson) {
                 if (!is_string($jobJson)) {
                     continue;
@@ -388,16 +390,24 @@ class RedisQueue extends AbstractQueue
 
                 $this->redis->lRem($failedKey, $jobJson, 1);
 
-                $restoreQueue = $failedJobData['queue'];
+                $restoreQueue = $failedJobData['queue'] ?? $this->defaultQueue;
+                $restoreQueueKey = $this->queuePrefix . $restoreQueue;
 
-                $this->push([
+                $jobDataToPush = [
                     'id' => $failedJobData['id'] ?? uniqid('job_', true),
                     'job' => $failedJobData['job'],
                     'payload' => $failedJobData['payload'] ?? [],
                     'attempts' => 0,
-                ], $restoreQueue);
+                    'created_at' => microtime(true),
+                    'queue' => $restoreQueue,
+                ];
+
+                $this->redis->lPush($restoreQueueKey, $this->encodeJobData($jobDataToPush));
             }
+
+            $this->redis->exec();
         } catch (RedisException $e) {
+            $this->redis->discard();
             throw new \RuntimeException("Failed to retry failed jobs: " . $e->getMessage(), 0, $e);
         }
     }
@@ -515,6 +525,8 @@ class RedisQueue extends AbstractQueue
 
             $movedCount = 0;
 
+            $this->redis->multi();
+
             foreach ($jobs as $jobJson) {
                 if (!is_string($jobJson)) {
                     continue;
@@ -525,8 +537,11 @@ class RedisQueue extends AbstractQueue
                 $movedCount++;
             }
 
+            $this->redis->exec();
+
             return $movedCount;
         } catch (RedisException $e) {
+            $this->redis->discard();
             return 0;
         }
     }
