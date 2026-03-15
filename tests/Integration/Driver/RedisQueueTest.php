@@ -52,18 +52,26 @@ class RedisQueueTest extends TestCase
 
     private function cleanupRedis(): void
     {
-        // Get all keys matching our test prefix
-        $keys = $this->redis->keys($this->testPrefix . '*');
-
-        if (!empty($keys) && is_array($keys)) {
-            // Delete all test keys
-            $this->redis->del($keys);
+        if (!isset($this->redis)) {
+            return;
         }
 
-        // Also clean up bulk test keys (uses different pattern)
-        $bulkKeys = $this->redis->keys('queue:*');
-        if (!empty($bulkKeys) && is_array($bulkKeys)) {
-            $this->redis->del($bulkKeys);
+        try {
+            // Get all keys matching our test prefix
+            $keys = $this->redis->keys($this->testPrefix . '*');
+
+            if (!empty($keys) && is_array($keys)) {
+                // Delete all test keys
+                $this->redis->del($keys);
+            }
+
+            // Also clean up bulk test keys (uses different pattern)
+            $bulkKeys = $this->redis->keys('queue:*');
+            if (!empty($bulkKeys) && is_array($bulkKeys)) {
+                $this->redis->del($bulkKeys);
+            }
+        } catch (\RedisException $e) {
+            // Ignore
         }
     }
 

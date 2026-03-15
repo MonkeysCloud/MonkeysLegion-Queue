@@ -369,12 +369,16 @@ class RedisQueue extends AbstractQueue
     public function retryFailed(int $limit = 100): void
     {
         $failedKey = $this->queuePrefix . $this->failedQueue;
+        $pipelineStarted = false;
 
         try {
             $jobs = $this->redis->lRange($failedKey, 0, $limit - 1);
             if (!is_array($jobs)) {
                 return;
             }
+
+            $this->redis->multi(\Redis::PIPELINE);
+            $pipelineStarted = true;
 
             foreach ($jobs as $jobJson) {
                 if (!is_string($jobJson)) {
@@ -388,16 +392,30 @@ class RedisQueue extends AbstractQueue
 
                 $this->redis->lRem($failedKey, $jobJson, 1);
 
-                $restoreQueue = $failedJobData['queue'];
+                $restoreQueue = $failedJobData['queue'] ?? $this->defaultQueue;
+                $restoreQueueKey = $this->queuePrefix . $restoreQueue;
 
-                $this->push([
+                $jobDataToPush = [
                     'id' => $failedJobData['id'] ?? uniqid('job_', true),
                     'job' => $failedJobData['job'],
                     'payload' => $failedJobData['payload'] ?? [],
                     'attempts' => 0,
-                ], $restoreQueue);
+                    'created_at' => microtime(true),
+                    'queue' => $restoreQueue,
+                ];
+
+                $this->redis->lPush($restoreQueueKey, $this->encodeJobData($jobDataToPush));
             }
+
+            $this->redis->exec();
         } catch (RedisException $e) {
+            if ($pipelineStarted) {
+                try {
+                    $this->redis->discard();
+                } catch (RedisException) {
+                    // Ignore discard errors to avoid masking the original exception
+                }
+            }
             throw new \RuntimeException("Failed to retry failed jobs: " . $e->getMessage(), 0, $e);
         }
     }
@@ -505,6 +523,7 @@ class RedisQueue extends AbstractQueue
         $delayedKey = $this->queuePrefix . "delayed:{$queue}";
         $queueKey = $this->queuePrefix . $queue;
         $now = microtime(true);
+        $pipelineStarted = false;
 
         try {
             $jobs = $this->redis->zRangeByScore($delayedKey, '-inf', (string)$now);
@@ -514,6 +533,9 @@ class RedisQueue extends AbstractQueue
             }
 
             $movedCount = 0;
+
+            $this->redis->multi(\Redis::PIPELINE);
+            $pipelineStarted = true;
 
             foreach ($jobs as $jobJson) {
                 if (!is_string($jobJson)) {
@@ -525,8 +547,17 @@ class RedisQueue extends AbstractQueue
                 $movedCount++;
             }
 
+            $this->redis->exec();
+
             return $movedCount;
         } catch (RedisException $e) {
+            if ($pipelineStarted) {
+                try {
+                    $this->redis->discard();
+                } catch (RedisException) {
+                    // Ignore discard errors to avoid masking the original exception
+                }
+            }
             return 0;
         }
     }

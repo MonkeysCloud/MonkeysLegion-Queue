@@ -64,53 +64,71 @@ class DatabaseQueue extends AbstractQueue
     {
         $queue = $queue ?? $this->defaultQueue;
         $now = microtime(true);
+        $lockKey = "queue_pop_{$queue}";
+        $lockAcquired = false;
 
-        $jobRow = $this->queryBuilder
-            ->duplicate()
-            ->from($this->table)
-            ->where('queue', '=', $queue)
-            ->whereNull('reserved_at')
-            ->whereNull('failed_at')
-            ->whereGroup(function ($q) use ($now) {
-                $q->whereNull('available_at')
-                    ->orWhere('available_at', '<=', $now);
-            })
-            ->orderBy('created_at', 'asc')
-            ->limit(1)
-            ->fetchAssoc();
-        $this->queryBuilder->reset(); // Clear previous query state
-
-        if (!$jobRow) {
-            return null;
+        // Try to acquire an advisory lock to prevent race conditions across workers
+        // SQLite doesn't support advisory locks, so we skip
+        $isSqlite = $this->connection->pdo()->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'sqlite';
+        if (!$isSqlite) {
+            $lockAcquired = $this->queryBuilder->getLock($lockKey, 5);
+            if (!$lockAcquired) {
+                return null; // Could not get lock, another worker is popping or contention is too high
+            }
         }
 
-        // Mark as reserved (simulate atomic claim)
-        $reservedAt = microtime(true);
-        $updated = $this->queryBuilder
-            ->where('id', '=', $jobRow['id'])
-            ->whereNull('reserved_at')
-            ->update($this->table, ['reserved_at' => $reservedAt])
-            ->execute();
+        try {
+            $jobRow = $this->queryBuilder
+                ->duplicate()
+                ->from($this->table)
+                ->where('queue', '=', $queue)
+                ->whereNull('reserved_at')
+                ->whereNull('failed_at')
+                ->whereGroup(function ($q) use ($now) {
+                    $q->whereNull('available_at')
+                        ->orWhere('available_at', '<=', $now);
+                })
+                ->orderBy('created_at', 'asc')
+                ->limit(1)
+                ->fetchAssoc();
+            $this->queryBuilder->reset(); // Clear previous query state
 
-        if (!$updated) {
-            // Another worker claimed it
-            return null;
+            if (!$jobRow) {
+                return null;
+            }
+
+            // Mark as reserved (simulate atomic claim)
+            $reservedAt = microtime(true);
+            $updated = $this->queryBuilder
+                ->where('id', '=', $jobRow['id'])
+                ->whereNull('reserved_at')
+                ->update($this->table, ['reserved_at' => $reservedAt])
+                ->execute();
+
+            if (!$updated) {
+                // Another worker claimed it
+                return null;
+            }
+
+            // Payload now contains the full job data including chain/batch metadata
+            $payloadData = is_string($jobRow['payload']) ? json_decode($jobRow['payload'], true) : [];
+
+            // Merge with row data, preferring payload values for chain/batch metadata
+            $jobData = array_merge($payloadData, [
+                'id' => $jobRow['id'],
+                'job' => $jobRow['job'],
+                'attempts' => $jobRow['attempts'],
+                'created_at' => $jobRow['created_at'],
+                'queue' => $jobRow['queue'],
+                'available_at' => $jobRow['available_at'],
+            ]);
+
+            return new Job($jobData, $this);
+        } finally {
+            if ($lockAcquired) {
+                $this->queryBuilder->releaseLock($lockKey);
+            }
         }
-
-        // Payload now contains the full job data including chain/batch metadata
-        $payloadData = is_string($jobRow['payload']) ? json_decode($jobRow['payload'], true) : [];
-
-        // Merge with row data, preferring payload values for chain/batch metadata
-        $jobData = array_merge($payloadData, [
-            'id' => $jobRow['id'],
-            'job' => $jobRow['job'],
-            'attempts' => $jobRow['attempts'],
-            'created_at' => $jobRow['created_at'],
-            'queue' => $jobRow['queue'],
-            'available_at' => $jobRow['available_at'],
-        ]);
-
-        return new Job($jobData, $this);
     }
 
     public function ack(JobInterface $job): void
@@ -289,8 +307,16 @@ class DatabaseQueue extends AbstractQueue
     public function bulk(array $jobs, string $queue = 'default'): void
     {
         $queue = $queue ?? $this->defaultQueue;
-        foreach ($jobs as $jobData) {
-            $this->push($jobData, $queue);
+
+        try {
+            $this->queryBuilder->beginTransaction();
+            foreach ($jobs as $jobData) {
+                $this->push($jobData, $queue);
+            }
+            $this->queryBuilder->commit();
+        } catch (\Throwable $e) {
+            $this->queryBuilder->rollBack();
+            throw new \RuntimeException('Failed to bulk insert jobs to database queue: ' . $e->getMessage(), 0, $e);
         }
     }
 
