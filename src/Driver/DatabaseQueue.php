@@ -65,12 +65,16 @@ class DatabaseQueue extends AbstractQueue
         $queue = $queue ?? $this->defaultQueue;
         $now = microtime(true);
         $lockKey = "queue_pop_{$queue}";
+        $lockAcquired = false;
 
         // Try to acquire an advisory lock to prevent race conditions across workers
-        // SQLite doesn't support advisory locks, so we skip for testing
+        // SQLite doesn't support advisory locks, so we skip
         $isSqlite = $this->connection->pdo()->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'sqlite';
-        if (!$isSqlite && !$this->queryBuilder->getLock($lockKey, 5)) {
-            return null; // Could not get lock, another worker is popping or contention is too high
+        if (!$isSqlite) {
+            $lockAcquired = $this->queryBuilder->getLock($lockKey, 5);
+            if (!$lockAcquired) {
+                return null; // Could not get lock, another worker is popping or contention is too high
+            }
         }
 
         try {
@@ -121,7 +125,9 @@ class DatabaseQueue extends AbstractQueue
 
             return new Job($jobData, $this);
         } finally {
-            $this->queryBuilder->releaseLock($lockKey);
+            if ($lockAcquired) {
+                $this->queryBuilder->releaseLock($lockKey);
+            }
         }
     }
 

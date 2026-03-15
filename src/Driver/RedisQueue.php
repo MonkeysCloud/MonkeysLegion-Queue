@@ -369,6 +369,7 @@ class RedisQueue extends AbstractQueue
     public function retryFailed(int $limit = 100): void
     {
         $failedKey = $this->queuePrefix . $this->failedQueue;
+        $pipelineStarted = false;
 
         try {
             $jobs = $this->redis->lRange($failedKey, 0, $limit - 1);
@@ -376,7 +377,8 @@ class RedisQueue extends AbstractQueue
                 return;
             }
 
-            $this->redis->multi();
+            $this->redis->multi(\Redis::PIPELINE);
+            $pipelineStarted = true;
 
             foreach ($jobs as $jobJson) {
                 if (!is_string($jobJson)) {
@@ -407,7 +409,13 @@ class RedisQueue extends AbstractQueue
 
             $this->redis->exec();
         } catch (RedisException $e) {
-            $this->redis->discard();
+            if ($pipelineStarted) {
+                try {
+                    $this->redis->discard();
+                } catch (RedisException) {
+                    // Ignore discard errors to avoid masking the original exception
+                }
+            }
             throw new \RuntimeException("Failed to retry failed jobs: " . $e->getMessage(), 0, $e);
         }
     }
@@ -515,6 +523,7 @@ class RedisQueue extends AbstractQueue
         $delayedKey = $this->queuePrefix . "delayed:{$queue}";
         $queueKey = $this->queuePrefix . $queue;
         $now = microtime(true);
+        $pipelineStarted = false;
 
         try {
             $jobs = $this->redis->zRangeByScore($delayedKey, '-inf', (string)$now);
@@ -525,7 +534,8 @@ class RedisQueue extends AbstractQueue
 
             $movedCount = 0;
 
-            $this->redis->multi();
+            $this->redis->multi(\Redis::PIPELINE);
+            $pipelineStarted = true;
 
             foreach ($jobs as $jobJson) {
                 if (!is_string($jobJson)) {
@@ -541,7 +551,13 @@ class RedisQueue extends AbstractQueue
 
             return $movedCount;
         } catch (RedisException $e) {
-            $this->redis->discard();
+            if ($pipelineStarted) {
+                try {
+                    $this->redis->discard();
+                } catch (RedisException) {
+                    // Ignore discard errors to avoid masking the original exception
+                }
+            }
             return 0;
         }
     }
