@@ -37,22 +37,22 @@ class DatabaseQueueTest extends TestCase
                 job VARCHAR(255) NOT NULL,
                 payload TEXT NOT NULL,
                 attempts INT NOT NULL DEFAULT 0,
-                created_at DOUBLE NOT NULL,
-                available_at DOUBLE NULL,
-                reserved_at DOUBLE NULL,
-                failed_at DOUBLE NULL
+                created_at REAL NOT NULL,
+                available_at REAL NULL,
+                reserved_at REAL NULL,
+                failed_at REAL NULL
             );
         ");
         $this->connection->pdo()->exec("
             CREATE TABLE IF NOT EXISTS failed_jobs (
                 id VARCHAR(64) PRIMARY KEY,
                 job VARCHAR(255) NOT NULL,
-                payload JSON NOT NULL,
+                payload TEXT NOT NULL,
                 original_queue VARCHAR(64) NOT NULL DEFAULT 'default',
                 attempts INT NOT NULL DEFAULT 0,
-                exception JSON NULL,
-                failed_at DOUBLE NOT NULL,
-                created_at DOUBLE NULL
+                exception TEXT NULL,
+                failed_at REAL NOT NULL,
+                created_at REAL NULL
             );
         ");
 

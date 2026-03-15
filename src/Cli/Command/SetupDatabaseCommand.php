@@ -126,6 +126,34 @@ final class SetupDatabaseCommand extends Command
         }
     }
 
+    /**
+     * Return driver-specific SQL type mappings.
+     *
+     * @return array<string, string> placeholder => replacement
+     */
+    private function getDriverTypeMap(): array
+    {
+        $driver = $this->connection->pdo()->getAttribute(PDO::ATTR_DRIVER_NAME);
+
+        return match ($driver) {
+            'pgsql' => [
+                '{FLOAT_TYPE}'    => 'DOUBLE PRECISION',
+                '{JSON_TYPE}'     => 'JSON',
+                '{IF_NOT_EXISTS}' => 'IF NOT EXISTS',
+            ],
+            'sqlite' => [
+                '{FLOAT_TYPE}'    => 'REAL',
+                '{JSON_TYPE}'     => 'TEXT',
+                '{IF_NOT_EXISTS}' => 'IF NOT EXISTS',
+            ],
+            default => [ // MySQL / MariaDB
+                '{FLOAT_TYPE}'    => 'DOUBLE',
+                '{JSON_TYPE}'     => 'JSON',
+                '{IF_NOT_EXISTS}' => '',  // MySQL < 8.0.29 doesn't support IF NOT EXISTS for indexes
+            ],
+        };
+    }
+
     private function runMigration(string $filename, string $placeholder, string $realTableName): bool
     {
         // Resolve path relative to this file: src/Cli/Command/SetupDatabaseCommand.php
@@ -139,7 +167,17 @@ final class SetupDatabaseCommand extends Command
         }
 
         $sqlContent = file_get_contents($path);
+
+        // Replace table name placeholder
         $sqlContent = str_replace($placeholder, $realTableName, $sqlContent);
+
+        // Replace type placeholders with driver-specific types
+        $typeMap = $this->getDriverTypeMap();
+        $sqlContent = str_replace(
+            array_keys($typeMap),
+            array_values($typeMap),
+            $sqlContent
+        );
 
         // Split into statements to handle them individually
         // This allows us to ignore "already exists" errors for indexes
