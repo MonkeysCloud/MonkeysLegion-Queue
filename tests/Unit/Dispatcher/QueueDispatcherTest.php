@@ -6,6 +6,7 @@ namespace MonkeysLegion\Queue\Tests\Unit\Dispatcher;
 
 use MonkeysLegion\Queue\Contracts\DispatchableJobInterface;
 use MonkeysLegion\Queue\Contracts\QueueInterface;
+use MonkeysLegion\Queue\Contracts\ShouldQueue;
 use MonkeysLegion\Queue\Dispatcher\QueueDispatcher;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -23,7 +24,7 @@ class QueueDispatcherTest extends TestCase
 
     public function testDispatchPushesJobToQueue(): void
     {
-        $job = new class ('test-data') implements DispatchableJobInterface {
+        $job = new class ('test-data') implements DispatchableJobInterface, ShouldQueue {
             public function __construct(public string $data)
             {
             }
@@ -47,7 +48,7 @@ class QueueDispatcherTest extends TestCase
 
     public function testDispatchWithDelayCallsLater(): void
     {
-        $job = new class implements DispatchableJobInterface {
+        $job = new class implements DispatchableJobInterface, ShouldQueue {
             public function handle(): void
             {
             }
@@ -68,7 +69,7 @@ class QueueDispatcherTest extends TestCase
 
     public function testDispatchToCustomQueue(): void
     {
-        $job = new class implements DispatchableJobInterface {
+        $job = new class implements DispatchableJobInterface, ShouldQueue {
             public function handle(): void
             {
             }
@@ -86,7 +87,7 @@ class QueueDispatcherTest extends TestCase
 
     public function testDispatchAtCalculatesDelay(): void
     {
-        $job = new class implements DispatchableJobInterface {
+        $job = new class implements DispatchableJobInterface, ShouldQueue {
             public function handle(): void
             {
             }
@@ -109,7 +110,7 @@ class QueueDispatcherTest extends TestCase
 
     public function testBuildPayloadExtractsConstructorArgs(): void
     {
-        $job = new class ('arg1', 123) implements DispatchableJobInterface {
+        $job = new class ('arg1', 123) implements DispatchableJobInterface, ShouldQueue {
             public function __construct(
                 public string $param1,
                 public int $param2
@@ -131,5 +132,44 @@ class QueueDispatcherTest extends TestCase
             );
 
         $this->dispatcher->dispatch($job);
+    }
+
+    public function testDispatchExecutesImmediatelyWhenShouldQueueNotImplemented(): void
+    {
+        $job = new class implements DispatchableJobInterface {
+            public bool $handled = false;
+            public function handle(): void
+            {
+                $this->handled = true;
+            }
+        };
+
+        $this->mockQueue->expects($this->never())
+            ->method('push');
+
+        $this->mockQueue->expects($this->never())
+            ->method('later');
+
+        $this->dispatcher->dispatch($job);
+
+        $this->assertTrue($job->handled);
+    }
+
+    public function testDispatchAtExecutesImmediatelyWhenShouldQueueNotImplemented(): void
+    {
+        $job = new class implements DispatchableJobInterface {
+            public bool $handled = false;
+            public function handle(): void
+            {
+                $this->handled = true;
+            }
+        };
+
+        $this->mockQueue->expects($this->never())
+            ->method('later');
+
+        $this->dispatcher->dispatchAt($job, time() + 60);
+
+        $this->assertTrue($job->handled);
     }
 }

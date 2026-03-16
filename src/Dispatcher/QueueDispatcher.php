@@ -10,6 +10,7 @@ use MonkeysLegion\Queue\Chain\PendingChain;
 use MonkeysLegion\Queue\Contracts\QueueDispatcherInterface;
 use MonkeysLegion\Queue\Contracts\DispatchableJobInterface;
 use MonkeysLegion\Queue\Contracts\QueueInterface;
+use MonkeysLegion\Queue\Contracts\ShouldQueue;
 use MonkeysLegion\Queue\Traits\JobSerializer;
 
 class QueueDispatcher implements QueueDispatcherInterface
@@ -27,6 +28,11 @@ class QueueDispatcher implements QueueDispatcherInterface
         string $queue = 'default',
         ?int $delay = null
     ): void {
+        if (!($job instanceof ShouldQueue)) {
+            $job->handle();
+            return;
+        }
+
         $jobData = $this->serializeJob($job);
         if ($delay) {
             $this->queueDriver->later($delay, $jobData, $queue);
@@ -40,6 +46,11 @@ class QueueDispatcher implements QueueDispatcherInterface
         int $timestamp,
         string $queue = 'default'
     ): void {
+        if (!($job instanceof ShouldQueue)) {
+            $job->handle();
+            return;
+        }
+
         $jobData = $this->serializeJob($job);
         $this->queueDriver->later($timestamp - time(), $jobData, $queue);
     }

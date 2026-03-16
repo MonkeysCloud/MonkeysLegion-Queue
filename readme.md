@@ -173,7 +173,9 @@ This creates `app/Jobs/SendEmailJob.php`:
 
 namespace App\Jobs;
 
-class SendEmailJob
+use MonkeysLegion\Queue\Contracts\ShouldQueue;
+
+class SendEmailJob implements ShouldQueue
 {
     public function __construct(
         public string $email,
@@ -194,7 +196,12 @@ class SendEmailJob
 
 #### Using QueueDispatcher (Recommended)
 
-The `QueueDispatcher` provides a clean, object-oriented way to dispatch jobs:
+The `QueueDispatcher` provides a clean, object-oriented way to dispatch jobs. 
+
+> [!NOTE]  
+> The `QueueDispatcher` checks if a job implements the `ShouldQueue` interface. 
+> - If **yes**, the job is pushed to the queue for asynchronous processing.
+> - If **no**, the job's `handle()` method is executed **synchronously** in the current process.
 
 ```php
 use MonkeysLegion\Queue\Dispatcher\QueueDispatcher;
@@ -450,6 +457,9 @@ $dispatcher->chain([
     new NotifyUserJob($userId),
 ])->onQueue('files')->dispatch();
 ```
+
+> [!IMPORTANT]
+> Jobs in a Chain or Batch are **always** queued, regardless of whether they implement the `ShouldQueue` interface.
 
 ### Job Batching
 
