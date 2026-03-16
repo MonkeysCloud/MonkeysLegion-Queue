@@ -6,6 +6,7 @@ namespace MonkeysLegion\Queue\Tests\Unit\Dispatcher;
 
 use MonkeysLegion\Queue\Contracts\DispatchableJobInterface;
 use MonkeysLegion\Queue\Contracts\QueueInterface;
+use MonkeysLegion\Queue\Contracts\ShouldSync;
 use MonkeysLegion\Queue\Dispatcher\QueueDispatcher;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -131,5 +132,44 @@ class QueueDispatcherTest extends TestCase
             );
 
         $this->dispatcher->dispatch($job);
+    }
+
+    public function testDispatchExecutesImmediatelyWhenShouldSyncImplemented(): void
+    {
+        $job = new class implements DispatchableJobInterface, ShouldSync {
+            public bool $handled = false;
+            public function handle(): void
+            {
+                $this->handled = true;
+            }
+        };
+
+        $this->mockQueue->expects($this->never())
+            ->method('push');
+
+        $this->mockQueue->expects($this->never())
+            ->method('later');
+
+        $this->dispatcher->dispatch($job);
+
+        $this->assertTrue($job->handled);
+    }
+
+    public function testDispatchAtExecutesImmediatelyWhenShouldSyncImplemented(): void
+    {
+        $job = new class implements DispatchableJobInterface, ShouldSync {
+            public bool $handled = false;
+            public function handle(): void
+            {
+                $this->handled = true;
+            }
+        };
+
+        $this->mockQueue->expects($this->never())
+            ->method('later');
+
+        $this->dispatcher->dispatchAt($job, time() + 60);
+
+        $this->assertTrue($job->handled);
     }
 }
