@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace MonkeysLegion\Queue\Tests\Fixtures;
 
 use MonkeysLegion\Queue\Contracts\DispatchableJobInterface;
-use MonkeysLegion\Queue\Contracts\ShouldQueue;
 
-class IntegrationTestJob implements DispatchableJobInterface, ShouldQueue
+class IntegrationTestJob implements DispatchableJobInterface
 {
     public static bool $handled = false;
     public static string $receivedData = '';

@@ -173,9 +173,7 @@ This creates `app/Jobs/SendEmailJob.php`:
 
 namespace App\Jobs;
 
-use MonkeysLegion\Queue\Contracts\ShouldQueue;
-
-class SendEmailJob implements ShouldQueue
+class SendEmailJob
 {
     public function __construct(
         public string $email,
@@ -192,16 +190,47 @@ class SendEmailJob implements ShouldQueue
 }
 ```
 
+#### Semantic Clarity (Optional)
+
+While all jobs are queued by default, you can implement the `ShouldQueue` interface to explicitly mark a class as an asynchronous job. This is recommended for better code readability and semantic clarity:
+
+```php
+use MonkeysLegion\Queue\Contracts\ShouldQueue;
+
+class SendEmailJob implements ShouldQueue
+{
+    // ...
+}
+```
+
+#### Synchronous Execution
+
+If you need a job to run immediately in the current process (synchronously), implement the `ShouldSync` interface:
+
+```php
+use MonkeysLegion\Queue\Contracts\ShouldSync;
+
+class ProcessImmediateJob implements ShouldSync
+{
+    public function handle(): void
+    {
+        // This will run synchronously when dispatched
+    }
+}
+```
+
 ### Dispatching Jobs
 
 #### Using QueueDispatcher (Recommended)
 
-The `QueueDispatcher` provides a clean, object-oriented way to dispatch jobs. 
+The `QueueDispatcher` provides a clean, object-oriented way to dispatch jobs. By default, all jobs are pushed to the queue driver.
 
-> [!NOTE]  
-> The `QueueDispatcher` checks if a job implements the `ShouldQueue` interface. 
-> - If **yes**, the job is pushed to the queue for asynchronous processing.
-> - If **no**, the job's `handle()` method is executed **synchronously** in the current process.
+> [!NOTE]
+> The `QueueDispatcher` checks if a job implements the `ShouldSync` interface. 
+> - If **yes**, the job's `handle()` method is executed **synchronously** in the current process.
+> - If **no** (default), the job is pushed to the queue for asynchronous processing.
+>
+> You may implement `ShouldQueue` as a semantic marker to explicitly denote asynchronous jobs.
 
 ```php
 use MonkeysLegion\Queue\Dispatcher\QueueDispatcher;

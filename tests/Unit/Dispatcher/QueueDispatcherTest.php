@@ -6,7 +6,7 @@ namespace MonkeysLegion\Queue\Tests\Unit\Dispatcher;
 
 use MonkeysLegion\Queue\Contracts\DispatchableJobInterface;
 use MonkeysLegion\Queue\Contracts\QueueInterface;
-use MonkeysLegion\Queue\Contracts\ShouldQueue;
+use MonkeysLegion\Queue\Contracts\ShouldSync;
 use MonkeysLegion\Queue\Dispatcher\QueueDispatcher;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -24,7 +24,7 @@ class QueueDispatcherTest extends TestCase
 
     public function testDispatchPushesJobToQueue(): void
     {
-        $job = new class ('test-data') implements DispatchableJobInterface, ShouldQueue {
+        $job = new class ('test-data') implements DispatchableJobInterface {
             public function __construct(public string $data)
             {
             }
@@ -48,7 +48,7 @@ class QueueDispatcherTest extends TestCase
 
     public function testDispatchWithDelayCallsLater(): void
     {
-        $job = new class implements DispatchableJobInterface, ShouldQueue {
+        $job = new class implements DispatchableJobInterface {
             public function handle(): void
             {
             }
@@ -69,7 +69,7 @@ class QueueDispatcherTest extends TestCase
 
     public function testDispatchToCustomQueue(): void
     {
-        $job = new class implements DispatchableJobInterface, ShouldQueue {
+        $job = new class implements DispatchableJobInterface {
             public function handle(): void
             {
             }
@@ -87,7 +87,7 @@ class QueueDispatcherTest extends TestCase
 
     public function testDispatchAtCalculatesDelay(): void
     {
-        $job = new class implements DispatchableJobInterface, ShouldQueue {
+        $job = new class implements DispatchableJobInterface {
             public function handle(): void
             {
             }
@@ -110,7 +110,7 @@ class QueueDispatcherTest extends TestCase
 
     public function testBuildPayloadExtractsConstructorArgs(): void
     {
-        $job = new class ('arg1', 123) implements DispatchableJobInterface, ShouldQueue {
+        $job = new class ('arg1', 123) implements DispatchableJobInterface {
             public function __construct(
                 public string $param1,
                 public int $param2
@@ -134,9 +134,9 @@ class QueueDispatcherTest extends TestCase
         $this->dispatcher->dispatch($job);
     }
 
-    public function testDispatchExecutesImmediatelyWhenShouldQueueNotImplemented(): void
+    public function testDispatchExecutesImmediatelyWhenShouldSyncImplemented(): void
     {
-        $job = new class implements DispatchableJobInterface {
+        $job = new class implements DispatchableJobInterface, ShouldSync {
             public bool $handled = false;
             public function handle(): void
             {
@@ -155,9 +155,9 @@ class QueueDispatcherTest extends TestCase
         $this->assertTrue($job->handled);
     }
 
-    public function testDispatchAtExecutesImmediatelyWhenShouldQueueNotImplemented(): void
+    public function testDispatchAtExecutesImmediatelyWhenShouldSyncImplemented(): void
     {
-        $job = new class implements DispatchableJobInterface {
+        $job = new class implements DispatchableJobInterface, ShouldSync {
             public bool $handled = false;
             public function handle(): void
             {
