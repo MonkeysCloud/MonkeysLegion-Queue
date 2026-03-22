@@ -14,10 +14,10 @@ use MonkeysLegion\Queue\Contracts\DispatchableJobInterface;
 trait JobSerializer
 {
     /**
-     * Serialize a job into an array format for queue storage.
+     * Serialize a job's constructor parameters into a storable format.
      *
-     * @param DispatchableJobInterface $job The job to serialize
-     * @return array{job: string, payload: array}
+     * @param DispatchableJobInterface $job The job instance to serialize
+     * @return array The serialized job data ready for storage
      */
     protected function serializeJob(DispatchableJobInterface $job): array
     {
@@ -30,7 +30,17 @@ trait JobSerializer
                 $name = $param->getName();
                 if ($reflection->hasProperty($name)) {
                     $prop = $reflection->getProperty($name);
-                    $payload[$name] = $prop->getValue($job);
+                    $value = $prop->getValue($job);
+
+                    // If it's an object, "freeze" it so JSON/Database storage doesn't break it
+                    if (is_object($value)) {
+                        $payload[$name] = [
+                            '__type' => 'serialized_object',
+                            'data'   => serialize($value)
+                        ];
+                    } else {
+                        $payload[$name] = $value;
+                    }
                 }
             }
         }
@@ -39,5 +49,28 @@ trait JobSerializer
             'job' => get_class($job),
             'payload' => $payload,
         ];
+    }
+
+    /**
+     * Unserialize the job payload back into real PHP objects.
+     *
+     * @param array $payload The raw payload from the queue storage
+     * @return array The "re-hydrated" payload ready for the constructor
+     */
+    protected function unserializeJob(array $payload): array
+    {
+        foreach ($payload as $key => $value) {
+            // Check if this specific parameter was "frozen" as a serialized object
+            if (
+                is_array($value) && 
+                isset($value['__type']) && 
+                $value['__type'] === 'serialized_object'
+            ) {
+                // Turn the string back into a real Class instance (e.g., App\Entity\User)
+                $payload[$key] = unserialize($value['data']);
+            }
+        }
+
+        return $payload;
     }
 }

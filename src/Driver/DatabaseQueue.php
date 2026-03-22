@@ -48,7 +48,7 @@ class DatabaseQueue extends AbstractQueue
                 'id' => $jobData['id'],
                 'queue' => $queue,
                 'job' => $jobData['job'],
-                'payload' => json_encode($jobData, JSON_UNESCAPED_UNICODE), // Store entire jobData as payload
+                'payload' => $this->encodeJobData($jobData), // Store entire jobData as payload
                 'attempts' => $jobData['attempts'],
                 'created_at' => $jobData['created_at'],
                 'available_at' => $jobData['available_at'],
@@ -111,7 +111,7 @@ class DatabaseQueue extends AbstractQueue
             }
 
             // Payload now contains the full job data including chain/batch metadata
-            $payloadData = is_string($jobRow['payload']) ? json_decode($jobRow['payload'], true) : [];
+            $payloadData = $this->decodeJobData($jobRow['payload']);
 
             // Merge with row data, preferring payload values for chain/batch metadata
             $jobData = array_merge($payloadData, [
@@ -225,11 +225,9 @@ class DatabaseQueue extends AbstractQueue
                 $failedJobs[] = [
                     'id' => $row['id'],
                     'job' => $row['job'],
-                    'payload' => is_string($row['payload']) ? json_decode($row['payload'], true) : [],
+                    'payload' => $this->decodeJobData($row['payload']),
                     'attempts' => $row['attempts'] ?? 0,
-                    'exception' => isset($row['exception']) && is_string($row['exception'])
-                        ? json_decode($row['exception'], true)
-                        : null,
+                    'exception' => isset($row['exception']) ? $this->decodeJobData($row['exception']) : null,
                     'failed_at' => $row['failed_at'],
                 ];
             }
@@ -338,7 +336,7 @@ class DatabaseQueue extends AbstractQueue
                 $jobs[] = [
                     'id' => $row['id'],
                     'job' => $row['job'],
-                    'payload' => is_string($row['payload']) ? json_decode($row['payload'], true) : [],
+                    'payload' => $this->decodeJobData($row['payload']),
                     'attempts' => $row['attempts'],
                     'created_at' => $row['created_at'],
                 ];
@@ -364,7 +362,7 @@ class DatabaseQueue extends AbstractQueue
                 $jobData = [
                     'id' => $row['id'],
                     'job' => $row['job'],
-                    'payload' => is_string($row['payload']) ? json_decode($row['payload'], true) : [],
+                    'payload' => $this->decodeJobData($row['payload']),
                     'attempts' => 0,
                     'created_at' => $row['created_at'] ?? microtime(true),
                 ];
@@ -418,7 +416,7 @@ class DatabaseQueue extends AbstractQueue
             $jobData = [
                 'id' => $row['id'],
                 'job' => $row['job'],
-                'payload' => is_string($row['payload']) ? json_decode($row['payload'], true) : [],
+                'payload' => $this->decodeJobData($row['payload']),
                 'attempts' => $row['attempts'],
                 'created_at' => $row['created_at'],
                 'queue' => $row['queue'],
@@ -566,7 +564,7 @@ class DatabaseQueue extends AbstractQueue
                 $jobData = [
                     'id' => $row['id'],
                     'job' => $row['job'],
-                    'payload' => is_string($row['payload']) ? json_decode($row['payload'], true) : [],
+                    'payload' => $this->decodeJobData($row['payload']),
                     'attempts' => $row['attempts'],
                     'created_at' => $row['created_at'],
                     'queue' => $row['queue'],
@@ -587,7 +585,7 @@ class DatabaseQueue extends AbstractQueue
                 $jobData = [
                     'id' => $row['id'],
                     'job' => $row['job'],
-                    'payload' => is_string($row['payload']) ? json_decode($row['payload'], true) : [],
+                    'payload' => $this->decodeJobData($row['payload']),
                     'attempts' => $row['attempts'] ?? 0,
                     'created_at' => $row['created_at'] ?? null,
                     'queue' => $queue,

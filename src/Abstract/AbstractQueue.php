@@ -55,7 +55,21 @@ abstract class AbstractQueue implements QueueInterface
 
     protected function encodeJobData(array $data): string
     {
-        return json_encode($data, JSON_UNESCAPED_UNICODE) ?: '';
+        return serialize($data);
+    }
+
+    protected function decodeJobData(string|null $data): array
+    {
+        if (empty($data)) {
+            return [];
+        }
+
+        try {
+            $unserialized = @unserialize($data);
+            return is_array($unserialized) ? $unserialized : [];
+        } catch (\Throwable $e) {
+            return [];
+        }
     }
 
     /**

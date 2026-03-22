@@ -237,7 +237,7 @@ class RedisQueueExtendedTest extends TestCase
         $this->queue->later(100, ['job' => 'TestJob', 'payload' => ['data' => 'test']], 'test_default');
 
         $jobs = $this->redis->zRange($this->testPrefix . 'delayed:test_default', 0, -1);
-        $jobData = json_decode($jobs[0], true);
+        $jobData = unserialize($jobs[0]);
         $jobId = $jobData['id'];
 
         $found = $this->queue->findJob($jobId, 'test_default');
@@ -278,7 +278,7 @@ class RedisQueueExtendedTest extends TestCase
         $this->queue->later(100, ['job' => 'TestJob', 'payload' => []], 'test_default');
 
         $jobs = $this->redis->zRange($this->testPrefix . 'delayed:test_default', 0, -1);
-        $jobData = json_decode($jobs[0], true);
+        $jobData = unserialize($jobs[0]);
         $jobId = $jobData['id'];
 
         $deleted = $this->queue->deleteJob($jobId, 'test_default');
