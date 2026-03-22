@@ -53,24 +53,51 @@ trait JobSerializer
 
     /**
      * Unserialize the job payload back into real PHP objects.
+     * Full backward compatibility with old JSON format.
      *
      * @param array $payload The raw payload from the queue storage
      * @return array The "re-hydrated" payload ready for the constructor
      */
-    protected function unserializeJob(array $payload): array
+    protected function unserializeJob(mixed $payload): array
     {
-        foreach ($payload as $key => $value) {
-            // Check if this specific parameter was "frozen" as a serialized object
-            if (
-                is_array($value) && 
-                isset($value['__type']) && 
-                $value['__type'] === 'serialized_object'
-            ) {
-                // Turn the string back into a real Class instance (e.g., App\Entity\User)
-                $payload[$key] = unserialize($value['data']);
+        // 1. TOLERATE OLD FORMAT: 
+        // If the database gives us a JSON string, decode it first.
+        if (is_string($payload)) {
+            $decoded = json_decode($payload, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $payload = $decoded;
+            } else {
+                // If it's a string but NOT JSON, try a full unserialize (safety catch)
+                if (preg_match('/^[aOs]:/', $payload)) {
+                    $payload = unserialize($payload);
+                }
             }
         }
 
-        return $payload;
+        // 2. PROCESS NEW FORMAT:
+        // At this point $payload is an array. We look for "frozen" objects.
+        if (is_array($payload)) {
+            // Check if we are dealing with the 'payload' sub-key or the top-level
+            $dataToProcess = $payload['payload'] ?? $payload;
+
+            foreach ($dataToProcess as $key => $value) {
+                if (
+                    is_array($value) && 
+                    isset($value['__type']) && 
+                    $value['__type'] === 'serialized_object'
+                ) {
+                    $dataToProcess[$key] = unserialize($value['data']);
+                }
+            }
+            
+            // Re-assign back if we were working on a sub-key
+            if (isset($payload['payload'])) {
+                $payload['payload'] = $dataToProcess;
+            } else {
+                $payload = $dataToProcess;
+            }
+        }
+
+        return (array) $payload;
     }
 }

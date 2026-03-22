@@ -64,10 +64,15 @@ class AbstractQueueTest extends TestCase
             {
             }
 
-            // Expose protected method for testing
+            // Expose protected methods for testing
             public function testEncodeJobData(array $data): string
             {
                 return $this->encodeJobData($data);
+            }
+
+            public function testDecodeJobData(string|null $data): array
+            {
+                return $this->decodeJobData($data);
             }
         };
     }
@@ -390,7 +395,7 @@ class AbstractQueueTest extends TestCase
         $this->assertStringContainsString('job-123', $encoded);
         $this->assertStringContainsString('TestJob', $encoded);
         
-        $decoded = unserialize($encoded);
+        $decoded = $this->queue->testDecodeJobData($encoded);
         $this->assertEquals($data, $decoded);
     }
 
@@ -402,7 +407,7 @@ class AbstractQueueTest extends TestCase
         ];
  
         $encoded = $this->queue->testEncodeJobData($data);
-        $decoded = unserialize($encoded);
+        $decoded = $this->queue->testDecodeJobData($encoded);
  
         $this->assertEquals('Hello 世界 🌍', $decoded['message']);
     }
@@ -416,7 +421,7 @@ class AbstractQueueTest extends TestCase
         $encoded = $this->queue->testEncodeJobData($data);
         
         $this->assertIsString($encoded);
-        $decoded = unserialize($encoded);
+        $decoded = $this->queue->testDecodeJobData($encoded);
         
         $this->assertArrayHasKey('self', $decoded);
         $this->assertSame($decoded, $decoded['self']);

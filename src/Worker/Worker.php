@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace MonkeysLegion\Queue\Worker;
 
+use MonkeysLegion\DI\Traits\ContainerAware;
+use MonkeysLegion\Logger\Contracts\MonkeysLoggerInterface;
 use MonkeysLegion\Queue\Batch\BatchRepository;
 use MonkeysLegion\Queue\Contracts\JobInterface;
 use MonkeysLegion\Queue\Contracts\QueueInterface;
@@ -21,10 +23,17 @@ use MonkeysLegion\Queue\RateLimiter\RateLimiterInterface;
  */
 class Worker implements WorkerInterface
 {
+    use ContainerAware;
+
     private bool $shouldQuit = false;
     private int $processedJobs = 0;
     private int $lastDelayedCheck = 0;
     private string $currentQueue = 'default';
+
+    private ?QueueEventDispatcher $eventDispatcher = null;
+    private ?RateLimiterInterface $rateLimiter = null;
+    private ?BatchRepository $batchRepository = null;
+    private ?MonkeysLoggerInterface $logger = null;
 
     public function __construct(
         private QueueInterface $queue,
@@ -33,11 +42,13 @@ class Worker implements WorkerInterface
         private int $memory = 128,
         private int $timeout = 60,
         private int $delayedCheckInterval = 30,
-        private ?QueueEventDispatcher $eventDispatcher = null,
-        private ?RateLimiterInterface $rateLimiter = null,
-        private ?BatchRepository $batchRepository = null
     ) {
         $this->registerSignalHandlers();
+
+        $this->eventDispatcher = $this->has(QueueEventDispatcher::class) ? $this->resolve(QueueEventDispatcher::class) : null;
+        $this->rateLimiter = $this->has(RateLimiterInterface::class) ? $this->resolve(RateLimiterInterface::class) : null;
+        $this->batchRepository = $this->has(BatchRepository::class) ? $this->resolve(BatchRepository::class) : null;
+        $this->logger = $this->has(MonkeysLoggerInterface::class) ? $this->resolve(MonkeysLoggerInterface::class) : null;
     }
 
     public function work(string|array $queue = 'default', int $sleep = 3): void
