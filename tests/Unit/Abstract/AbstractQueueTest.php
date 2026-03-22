@@ -375,7 +375,7 @@ class AbstractQueueTest extends TestCase
         $this->assertEquals('test_prefix:', $queue->getQueuePrefix());
     }
 
-    public function testEncodeJobDataReturnsJsonString(): void
+    public function testEncodeJobDataReturnsSerializedString(): void
     {
         $data = [
             'id' => 'job-123',
@@ -383,11 +383,14 @@ class AbstractQueueTest extends TestCase
             'payload' => ['key' => 'value'],
             'attempts' => 0,
         ];
-
+ 
         $encoded = $this->queue->testEncodeJobData($data);
-
+ 
         $this->assertIsString($encoded);
-        $decoded = json_decode($encoded, true);
+        $this->assertStringContainsString('job-123', $encoded);
+        $this->assertStringContainsString('TestJob', $encoded);
+        
+        $decoded = unserialize($encoded);
         $this->assertEquals($data, $decoded);
     }
 
@@ -397,22 +400,26 @@ class AbstractQueueTest extends TestCase
             'id' => 'job-123',
             'message' => 'Hello 世界 🌍',
         ];
-
+ 
         $encoded = $this->queue->testEncodeJobData($data);
-        $decoded = json_decode($encoded, true);
-
+        $decoded = unserialize($encoded);
+ 
         $this->assertEquals('Hello 世界 🌍', $decoded['message']);
     }
 
-    public function testEncodeJobDataReturnsEmptyStringOnFailure(): void
+    public function testEncodeJobDataHandlesRecursiveReferences(): void
     {
-        // Create invalid data that can't be JSON encoded (e.g., recursive reference)
+        // Simple circular reference
         $data = [];
         $data['self'] = &$data;
-
+ 
         $encoded = $this->queue->testEncodeJobData($data);
-
-        $this->assertEquals('', $encoded);
+        
+        $this->assertIsString($encoded);
+        $decoded = unserialize($encoded);
+        
+        $this->assertArrayHasKey('self', $decoded);
+        $this->assertSame($decoded, $decoded['self']);
     }
 
     public function testRetryFailedDefaultImplementation(): void

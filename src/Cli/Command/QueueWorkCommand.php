@@ -7,7 +7,10 @@ namespace MonkeysLegion\Queue\Cli\Command;
 use MonkeysLegion\Cli\Console\Attributes\Command as CommandAttr;
 use MonkeysLegion\Cli\Console\Command;
 use MonkeysLegion\Cli\Console\Traits\Cli;
+use MonkeysLegion\Queue\Batch\BatchRepository;
 use MonkeysLegion\Queue\Contracts\QueueInterface;
+use MonkeysLegion\Queue\Events\QueueEventDispatcher;
+use MonkeysLegion\Queue\RateLimiter\RateLimiterInterface;
 use MonkeysLegion\Queue\Worker\Worker;
 
 /**
@@ -18,7 +21,12 @@ final class QueueWorkCommand extends Command
 {
     use Cli;
 
-    public function __construct(private QueueInterface $queueDriver)
+    public function __construct(
+        private QueueInterface $queueDriver,
+        private ?QueueEventDispatcher $eventDispatcher = null,
+        private ?RateLimiterInterface $rateLimiter = null,
+        private ?BatchRepository $batchRepository = null
+    )
     {
         return parent::__construct();
     }
@@ -37,7 +45,10 @@ final class QueueWorkCommand extends Command
                 sleep: $sleep,
                 maxTries: $maxTries,
                 memory: $memory,
-                timeout: $timeout
+                timeout: $timeout,
+                eventDispatcher: $this->eventDispatcher,
+                rateLimiter: $this->rateLimiter,
+                batchRepository: $this->batchRepository
             );
 
             $worker->work($queue, $sleep);
