@@ -7,10 +7,11 @@ namespace MonkeysLegion\Queue\Abstract;
 use MonkeysLegion\Cli\Console\Traits\Cli;
 use MonkeysLegion\Queue\Contracts\JobInterface;
 use MonkeysLegion\Queue\Contracts\QueueInterface;
+use MonkeysLegion\Queue\Traits\JobSerializer;
 
 abstract class AbstractQueue implements QueueInterface
 {
-    use Cli;
+    use Cli, JobSerializer;
 
     /**
      * @var string Default queue name (channel).
@@ -55,7 +56,42 @@ abstract class AbstractQueue implements QueueInterface
 
     protected function encodeJobData(array $data): string
     {
-        return json_encode($data, JSON_UNESCAPED_UNICODE) ?: '';
+        return json_encode(serialize($data));
+    }
+
+    protected function decodeJobData(string|null $data): array
+    {
+        if (empty($data)) {
+            return [];
+        }
+
+        try {
+            $decoded = json_decode($data, true);
+            
+            // Handle invalid JSON escapes (common in old data with single backslashes in namespaces)
+            if ($decoded === null && json_last_error() !== JSON_ERROR_NONE && !empty($data)) {
+                // Try to double-escape backslashes that are not already escaped
+                $fixedData = preg_replace('/(?<!\\\\)\\\\(?!\\\\)/', '\\\\\\\\', $data);
+                $decoded = json_decode($fixedData, true);
+            }
+
+            // If it's a string, it's the new format (JSON-wrapped serialized string)
+            if (is_string($decoded)) {
+                $unserialized = @unserialize($decoded);
+                return is_array($unserialized) ? $unserialized : [];
+            }
+            
+            // If JSON decode failed but it looks like a serialized string, try unserializing directly
+            if ($decoded === null && preg_match('/^[aOs]:/', $data)) {
+                $unserialized = @unserialize($data);
+                return is_array($unserialized) ? $unserialized : [];
+            }
+
+            // If it's an array, it's the old format
+            return is_array($decoded) ? $decoded : [];
+        } catch (\Throwable $e) {
+            return [];
+        }
     }
 
     /**

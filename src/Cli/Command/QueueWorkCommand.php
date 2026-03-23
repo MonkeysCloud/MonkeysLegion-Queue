@@ -18,8 +18,9 @@ final class QueueWorkCommand extends Command
 {
     use Cli;
 
-    public function __construct(private QueueInterface $queueDriver)
-    {
+    public function __construct(
+        private QueueInterface $queueDriver
+    ) {
         return parent::__construct();
     }
 

@@ -48,6 +48,16 @@ class RedisQueueExtendedTest extends TestCase
         }
     }
 
+    private function decodeRaw(string $data): array
+    {
+        $decoded = json_decode($data, true);
+        if (is_string($decoded)) {
+            $unserialized = @unserialize($decoded);
+            return is_array($unserialized) ? $unserialized : [];
+        }
+        return is_array($decoded) ? $decoded : [];
+    }
+
     private function cleanupRedis(): void
     {
         $keys = $this->redis->keys($this->testPrefix . '*');
@@ -237,7 +247,7 @@ class RedisQueueExtendedTest extends TestCase
         $this->queue->later(100, ['job' => 'TestJob', 'payload' => ['data' => 'test']], 'test_default');
 
         $jobs = $this->redis->zRange($this->testPrefix . 'delayed:test_default', 0, -1);
-        $jobData = json_decode($jobs[0], true);
+        $jobData = $this->decodeRaw($jobs[0]);
         $jobId = $jobData['id'];
 
         $found = $this->queue->findJob($jobId, 'test_default');
@@ -278,7 +288,7 @@ class RedisQueueExtendedTest extends TestCase
         $this->queue->later(100, ['job' => 'TestJob', 'payload' => []], 'test_default');
 
         $jobs = $this->redis->zRange($this->testPrefix . 'delayed:test_default', 0, -1);
-        $jobData = json_decode($jobs[0], true);
+        $jobData = $this->decodeRaw($jobs[0]);
         $jobId = $jobData['id'];
 
         $deleted = $this->queue->deleteJob($jobId, 'test_default');

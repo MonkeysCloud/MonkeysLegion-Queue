@@ -6,9 +6,12 @@ namespace MonkeysLegion\Queue\Job;
 
 use MonkeysLegion\Queue\Contracts\JobInterface;
 use MonkeysLegion\Queue\Contracts\QueueInterface;
+use MonkeysLegion\Queue\Traits\JobSerializer;
 
 class Job implements JobInterface
 {
+    use JobSerializer;
+
     private int $attempts;
     private string $id;
 
@@ -23,7 +26,7 @@ class Job implements JobInterface
     public function handle(): void
     {
         $jobClass = $this->data['job'] ?? null;
-        $payload = $this->data['payload'] ?? [];
+        $payload = $this->unserializeJob($this->data['payload'] ?? []);
 
         if (!$jobClass || !class_exists($jobClass)) {
             throw new \RuntimeException("Job class '{$jobClass}' not found");
