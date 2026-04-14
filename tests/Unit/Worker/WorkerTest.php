@@ -7,14 +7,18 @@ namespace MonkeysLegion\Queue\Tests\Unit\Worker;
 use MonkeysLegion\Queue\Contracts\JobInterface;
 use MonkeysLegion\Queue\Contracts\QueueInterface;
 use MonkeysLegion\Queue\Worker\Worker;
+
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
-use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
 // phpcs:disable PSR1.Files.SideEffects
 require_once __DIR__ . '/WorkerFunctionsMock.php';
 // phpcs:enable PSR1.Files.SideEffects
 
+/**
+ * WorkerTest validates the behavior of the background worker process.
+ */
 #[AllowMockObjectsWithoutExpectations]
 class WorkerTest extends TestCase
 {
@@ -23,6 +27,15 @@ class WorkerTest extends TestCase
 
     protected function setUp(): void
     {
+        $container = new \MonkeysLegion\DI\Container();
+        \MonkeysLegion\DI\Container::setInstance($container);
+
+        // Prevent Worker from trying to autowire real database repositories
+        $container->set(\MonkeysLegion\Queue\Batch\BatchRepository::class, fn() => null);
+        $container->set(\MonkeysLegion\Queue\Events\QueueEventDispatcher::class, fn() => null);
+        $container->set(\MonkeysLegion\Queue\RateLimiter\RateLimiterInterface::class, fn() => null);
+        $container->set(\MonkeysLegion\Logger\Contracts\MonkeysLoggerInterface::class, fn() => null);
+
         $this->mockQueue = $this->createMock(QueueInterface::class);
         $this->worker = new Worker(
             queue: $this->mockQueue,
