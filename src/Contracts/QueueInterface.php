@@ -209,4 +209,11 @@ interface QueueInterface
      * @return string[] List of queue names.
      */
     public function getQueues(): array;
+
+    /**
+     * Get queue configuration settings.
+     *
+     * @return array<string, mixed>
+     */
+    public function getSettings(): array;
 }

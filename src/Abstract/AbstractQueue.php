@@ -9,6 +9,9 @@ use MonkeysLegion\Queue\Contracts\JobInterface;
 use MonkeysLegion\Queue\Contracts\QueueInterface;
 use MonkeysLegion\Queue\Traits\JobSerializer;
 
+/**
+ * AbstractQueue serves as the base for all queue engine implementations.
+ */
 abstract class AbstractQueue implements QueueInterface
 {
     use Cli, JobSerializer;
@@ -43,6 +46,11 @@ abstract class AbstractQueue implements QueueInterface
      */
     protected int $maxAttempts = 3;
 
+    /**
+     * @var string URL prefix for the dashboard.
+     */
+    protected string $dashboardPath = 'ml-queue';
+
     public function __construct(array $config)
     {
         $this->defaultQueue      = $config['default_queue']     ?? 'default';
@@ -52,6 +60,7 @@ abstract class AbstractQueue implements QueueInterface
         $this->retryAfter        = $config['retry_after']       ?? 90;
         $this->visibilityTimeout = $config['visibility_timeout'] ?? 300;
         $this->maxAttempts       = $config['max_attempts']      ?? 3;
+        $this->dashboardPath     = $config['path']     ?? 'ml-queue';
     }
 
     protected function encodeJobData(array $data): string
@@ -67,7 +76,7 @@ abstract class AbstractQueue implements QueueInterface
 
         try {
             $decoded = json_decode($data, true);
-            
+
             // Handle invalid JSON escapes (common in old data with single backslashes in namespaces)
             if ($decoded === null && json_last_error() !== JSON_ERROR_NONE && !empty($data)) {
                 // Try to double-escape backslashes that are not already escaped
@@ -80,7 +89,7 @@ abstract class AbstractQueue implements QueueInterface
                 $unserialized = @unserialize($decoded);
                 return is_array($unserialized) ? $unserialized : [];
             }
-            
+
             // If JSON decode failed but it looks like a serialized string, try unserializing directly
             if ($decoded === null && preg_match('/^[aOs]:/', $data)) {
                 $unserialized = @unserialize($data);
@@ -214,5 +223,23 @@ abstract class AbstractQueue implements QueueInterface
     public function getQueues(): array
     {
         return [$this->defaultQueue, $this->failedQueue];
+    }
+
+    /**
+     * Get queue configuration settings.
+     *
+     * @return array<string, mixed>
+     */
+    public function getSettings(): array
+    {
+        return [
+            'default_queue' => $this->defaultQueue,
+            'failed_queue' => $this->failedQueue,
+            'queue_prefix' => $this->queuePrefix,
+            'retry_after' => $this->retryAfter,
+            'visibility_timeout' => $this->visibilityTimeout,
+            'max_attempts' => $this->maxAttempts,
+            'path' => $this->dashboardPath ?? 'ml-queue',
+        ];
     }
 }
