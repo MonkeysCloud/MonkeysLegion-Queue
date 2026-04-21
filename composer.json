@@ -12,7 +12,8 @@
     "batching",
     "chaining",
     "rate-limiting",
-    "events"
+    "events",
+    "cli"
   ],
   "autoload": {
     "psr-4": {
@@ -57,8 +58,19 @@
   "prefer-stable": true,
   "require": {
     "php": "^8.4",
-    "monkeyscloud/monkeyslegion-cli": "^1.0 || ^2.0",
-    "monkeyscloud/monkeyslegion-database": "^1.0 || ^2.0",
-    "monkeyscloud/monkeyslegion-query": "^1.0 || ^2.0"
+    "monkeyscloud/monkeyslegion-cli": "^2.0",
+    "monkeyscloud/monkeyslegion-http": "^2.0",
+    "monkeyscloud/monkeyslegion-router": "^2.1",
+    "monkeyscloud/monkeyslegion-core": "^2.0",
+    "monkeyscloud/monkeyslegion-template": "^2.0",
+    "monkeyscloud/monkeyslegion-query": "^2.0",
+    "monkeyscloud/monkeyslegion-database": "^2.0"
+  },
+  "extra": {
+    "monkeyslegion": {
+      "providers": [
+        "MonkeysLegion\\Queue\\Providers\\QueueDashboardProvider"
+      ]
+    }
   }
 }

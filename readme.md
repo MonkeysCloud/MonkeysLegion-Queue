@@ -69,42 +69,41 @@ composer require monkeyscloud/monkeyslegion-queue
 
 Create a configuration file (e.g., `config/queue.php`):
 
-```php
-<?php
+```mlc
+queue {
+    # The default store to use (redis, database, null)
+    default = ${QUEUE_DEFAULT:-null}
 
-return [
-    // The default store to use (redis, database, null)
-    'default' => $_ENV['QUEUE_DEFAULT'] ?? 'redis',
+    # Core queue behavior
+    settings {
+        default_queue      = ${QUEUE_DEFAULT_QUEUE:-default}
+        failed_queue       = ${QUEUE_FAILED_QUEUE:-failed}
+        queue_prefix       = ${QUEUE_PREFIX:-ml_queue}
+        retry_after        = ${QUEUE_RETRY_AFTER:-90}
+        visibility_timeout = ${QUEUE_VISIBILITY_TIMEOUT:-300}
+        max_attempts       = ${QUEUE_MAX_ATTEMPTS:-3}
+        path               = ${QUEUE_VIEW_PATH:-ml-queue}
+    }
 
-    // Core queue behavior
-    'settings' => [
-        'default_queue'      => $_ENV['QUEUE_DEFAULT_QUEUE'] ?? 'default',
-        'failed_queue'       => $_ENV['QUEUE_FAILED_QUEUE'] ?? 'failed',
-        'queue_prefix'       => $_ENV['QUEUE_PREFIX'] ?? 'ml_queue',
-        'retry_after'        => $_ENV['QUEUE_RETRY_AFTER'] ?? 90,
-        'visibility_timeout' => $_ENV['QUEUE_VISIBILITY_TIMEOUT'] ?? 300,
-        'max_attempts'       => $_ENV['QUEUE_MAX_ATTEMPTS'] ?? 3,
-    ],
+    # Queue drivers
+    stores {
+        redis {
+            host     = ${REDIS_HOST:-127.0.01}
+            port     = ${REDIS_PORT:-6379}
+            username = ${REDIS_USERNAME:-null}
+            password = ${REDIS_PASSWORD:-null}
+            database = ${REDIS_DATABASE:-0}
+            timeout  = ${REDIS_TIMEOUT:-2.0}
+        }
 
-    // Queue drivers
-    'stores' => [
-        'redis' => [
-            'host'     => $_ENV['REDIS_HOST'] ?? '127.0.0.1',
-            'port'     => $_ENV['REDIS_PORT'] ?? 6379,
-            'username' => $_ENV['REDIS_USERNAME'] ?? null,
-            'password' => $_ENV['REDIS_PASSWORD'] ?? null,
-            'database' => $_ENV['REDIS_DATABASE'] ?? 0,
-            'timeout'  => $_ENV['REDIS_TIMEOUT'] ?? 2.0,
-        ],
+        null {}
 
-        'null' => [],
-
-        'database' => [
-            'table' => $_ENV['QUEUE_DATABASE_TABLE'] ?? 'jobs',
-            'failed_table' => $_ENV['QUEUE_DATABASE_FAILED_TABLE'] ?? 'failed_jobs',
-        ],
-    ],
-];
+        database {
+            table = ${QUEUE_DATABASE_TABLE:-jobs}
+            failed_table = ${QUEUE_DATABASE_FAILED_TABLE:-failed_jobs}
+        }
+    }
+}
 ```
 
 ### Environment Variables
@@ -226,7 +225,8 @@ class ProcessImmediateJob implements ShouldSync
 The `QueueDispatcher` provides a clean, object-oriented way to dispatch jobs. By default, all jobs are pushed to the queue driver.
 
 > [!NOTE]
-> The `QueueDispatcher` checks if a job implements the `ShouldSync` interface. 
+> The `QueueDispatcher` checks if a job implements the `ShouldSync` interface.
+>
 > - If **yes**, the job's `handle()` method is executed **synchronously** in the current process.
 > - If **no** (default), the job is pushed to the queue for asynchronous processing.
 >
