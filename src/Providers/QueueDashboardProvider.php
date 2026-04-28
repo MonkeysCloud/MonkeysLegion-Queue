@@ -26,9 +26,13 @@ final class QueueDashboardProvider
         // Resolve prefix from configuration before scanning
         if (!defined('ML_QUEUE_DASHBOARD_PREFIX')) {
             $prefix = 'ml-queue';
-            if ($this->has(QueueInterface::class)) {
-                $queue = $this->resolve(QueueInterface::class);
-                $prefix = $queue->getSettings()['path'] ?? 'ml-queue';
+            try {
+                if ($this->has(QueueInterface::class)) {
+                    $queue = $this->resolve(QueueInterface::class);
+                    $prefix = $queue->getSettings()['path'] ?? 'ml-queue';
+                }
+            } catch (\Throwable) {
+                // Queue driver unavailable (e.g. Redis not running) — use default prefix
             }
             define('ML_QUEUE_DASHBOARD_PREFIX', '/' . ltrim($prefix, '/') . '/dashboard');
         }
