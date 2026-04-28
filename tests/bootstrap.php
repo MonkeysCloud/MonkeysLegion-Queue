@@ -21,8 +21,8 @@ if (!defined('PHPUNIT_RUNNING')) {
 $container = new \MonkeysLegion\DI\Container();
 \MonkeysLegion\DI\Container::setInstance($container);
 
-// Prevent Worker from trying to autowire real database repositories by providing empty results
-// This is necessary because Container::has() returns true for any existing class.
+// Prevent Worker from trying to autowire real database repositories by providing null factories.
+// These are optional services that the Worker checks via has() before resolving.
 $container->set(\MonkeysLegion\Queue\Batch\BatchRepository::class, fn() => null);
 $container->set(\MonkeysLegion\Queue\Events\QueueEventDispatcher::class, fn() => null);
 $container->set(\MonkeysLegion\Queue\RateLimiter\RateLimiterInterface::class, fn() => null);

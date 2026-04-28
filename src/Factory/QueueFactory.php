@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MonkeysLegion\Queue\Factory;
 
-use MonkeysLegion\Database\Contracts\ConnectionInterface;
+use MonkeysLegion\Database\Contracts\ConnectionManagerInterface;
 use MonkeysLegion\Queue\Contracts\QueueInterface;
 use MonkeysLegion\Queue\Driver\DatabaseQueue;
 use MonkeysLegion\Queue\Driver\RedisQueue;
@@ -22,7 +22,7 @@ class QueueFactory
     private array $stores;
     private string $defaultDriver;
 
-    public function __construct(array $config, private ?ConnectionInterface $dbConnection = null)
+    public function __construct(array $config, private ?ConnectionManagerInterface $dbConnectionManager = null)
     {
         $this->defaultDriver = $config['default'] ?? 'redis';
         $this->settings = $config['settings'] ?? [];
@@ -121,14 +121,14 @@ class QueueFactory
     {
         $storeConfig = $this->stores['database'] ?? [];
 
-        if ($this->dbConnection === null) {
-            throw new \RuntimeException('Database connection is required for Database queue driver');
+        if ($this->dbConnectionManager === null) {
+            throw new \RuntimeException('Database connection manager is required for Database queue driver');
         }
         $config = $this->settings;
         $config['table'] = $storeConfig['table'] ?? 'jobs';
         $config['failed_table'] = $storeConfig['failed_table'] ?? 'failed_jobs';
 
-        return new DatabaseQueue($this->dbConnection, $config);
+        return new DatabaseQueue($this->dbConnectionManager, $config);
     }
 
     /**

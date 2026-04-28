@@ -163,7 +163,7 @@ final class DashboardControllerTest extends TestCase
         $compiler = new Compiler($parser);
         $renderer = new Renderer($parser, $compiler, $loader, true, $cacheDir);
 
-        return new DashboardController($queue, $renderer, new QueueDashboardProvider());
+        return new DashboardController($queue, $renderer);
     }
 
     private function makeRequest(

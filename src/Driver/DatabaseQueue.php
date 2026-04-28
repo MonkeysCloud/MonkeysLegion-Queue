@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace MonkeysLegion\Queue\Driver;
 
-use MonkeysLegion\Database\Contracts\ConnectionInterface;
-use MonkeysLegion\Query\QueryBuilder;
+use MonkeysLegion\Database\Contracts\ConnectionManagerInterface;
+use MonkeysLegion\Query\Query\QueryBuilder;
 use MonkeysLegion\Queue\Abstract\AbstractQueue;
 use MonkeysLegion\Queue\Contracts\JobInterface;
 use MonkeysLegion\Queue\Job\Job;
@@ -17,10 +17,10 @@ class DatabaseQueue extends AbstractQueue
     private string $failedTable;
 
     public function __construct(
-        private ConnectionInterface $connection,
+        private ConnectionManagerInterface $connectionManager,
         array $config = []
     ) {
-        $this->queryBuilder = new QueryBuilder($this->connection);
+        $this->queryBuilder = new QueryBuilder($this->connectionManager);
         $this->table = $config['table'] ?? 'jobs';
         $this->failedTable = $config['failed_table'] ?? 'failed_jobs';
         parent::__construct($config);
@@ -44,7 +44,7 @@ class DatabaseQueue extends AbstractQueue
         try {
             // Insert job into the database table
             // Store all job data including chain/batch metadata in payload
-            $this->queryBuilder->insert($this->table, [
+            $this->queryBuilder->from($this->table)->insert([
                 'id' => $jobData['id'],
                 'queue' => $queue,
                 'job' => $jobData['job'],
@@ -69,9 +69,12 @@ class DatabaseQueue extends AbstractQueue
 
         // Try to acquire an advisory lock to prevent race conditions across workers
         // SQLite doesn't support advisory locks, so we skip
-        $isSqlite = $this->connection->pdo()->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'sqlite';
+        $conn = $this->connectionManager->connection();
+        $isSqlite = $conn->pdo()->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'sqlite';
         if (!$isSqlite) {
-            $lockAcquired = $this->queryBuilder->getLock($lockKey, 5);
+            $stmt = $conn->pdo()->prepare('SELECT GET_LOCK(?, ?)');
+            $stmt->execute([$lockKey, 5]);
+            $lockAcquired = (bool) $stmt->fetchColumn();
             if (!$lockAcquired) {
                 return null; // Could not get lock, another worker is popping or contention is too high
             }
@@ -79,7 +82,7 @@ class DatabaseQueue extends AbstractQueue
 
         try {
             $jobRow = $this->queryBuilder
-                ->duplicate()
+                ->newQuery()
                 ->from($this->table)
                 ->where('queue', '=', $queue)
                 ->whereNull('reserved_at')
@@ -90,8 +93,7 @@ class DatabaseQueue extends AbstractQueue
                 })
                 ->orderBy('created_at', 'asc')
                 ->limit(1)
-                ->fetchAssoc();
-            $this->queryBuilder->reset(); // Clear previous query state
+                ->first();
 
             if (!$jobRow) {
                 return null;
@@ -100,10 +102,11 @@ class DatabaseQueue extends AbstractQueue
             // Mark as reserved (simulate atomic claim)
             $reservedAt = microtime(true);
             $updated = $this->queryBuilder
+                ->newQuery()
+                ->from($this->table)
                 ->where('id', '=', $jobRow['id'])
                 ->whereNull('reserved_at')
-                ->update($this->table, ['reserved_at' => $reservedAt])
-                ->execute();
+                ->update(['reserved_at' => $reservedAt]);
 
             if (!$updated) {
                 // Another worker claimed it
@@ -126,7 +129,8 @@ class DatabaseQueue extends AbstractQueue
             return new Job($jobData, $this);
         } finally {
             if ($lockAcquired) {
-                $this->queryBuilder->releaseLock($lockKey);
+                $stmt = $conn->pdo()->prepare('SELECT RELEASE_LOCK(?)');
+                $stmt->execute([$lockKey]);
             }
         }
     }
@@ -137,9 +141,10 @@ class DatabaseQueue extends AbstractQueue
         $jobId = $job->getId();
         try {
             $this->queryBuilder
+                ->newQuery()
+                ->from($this->table)
                 ->where('id', '=', $jobId)
-                ->delete($this->table)
-                ->execute();
+                ->delete();
         } catch (\Exception $e) {
             throw new \RuntimeException('Failed to acknowledge job: ' . $e->getMessage());
         }
@@ -165,10 +170,12 @@ class DatabaseQueue extends AbstractQueue
         ];
 
         try {
-            $this->queryBuilder->insert($this->failedTable, $failedJobData);
+            $this->queryBuilder->from($this->failedTable)->insert($failedJobData);
             $this->queryBuilder
-                ->delete($this->table)->where('id', '=', $job->getId())
-                ->execute();
+                ->newQuery()
+                ->from($this->table)
+                ->where('id', '=', $job->getId())
+                ->delete();
         } catch (\Exception $e) {
             throw new \RuntimeException('Failed to move job to failed_jobs: ' . $e->getMessage());
         }
@@ -183,12 +190,14 @@ class DatabaseQueue extends AbstractQueue
 
         try {
             $this->queryBuilder
+                ->newQuery()
+                ->from($this->table)
                 ->where('id', '=', $jobId)
-                ->update($this->table, [
+                ->update([
                     'attempts' => $attempts,
                     'reserved_at' => null,
                     'available_at' => $availableAt,
-                ])->execute();
+                ]);
         } catch (\Exception $e) {
             throw new \RuntimeException('Failed to release job back to queue: ' . $e->getMessage());
         }
@@ -200,9 +209,10 @@ class DatabaseQueue extends AbstractQueue
         $queue = $queue ?? $this->defaultQueue;
         try {
             $this->queryBuilder
+                ->newQuery()
+                ->from($this->table)
                 ->where('queue', '=', $queue)
-                ->delete($this->table)
-                ->execute();
+                ->delete();
         } catch (\Exception $e) {
             throw new \RuntimeException('Failed to clear queue: ' . $e->getMessage());
         }
@@ -212,13 +222,11 @@ class DatabaseQueue extends AbstractQueue
     {
         try {
             $rows = $this->queryBuilder
-                ->duplicate()
+                ->newQuery()
                 ->from($this->failedTable)
                 ->orderBy('failed_at', 'desc')
                 ->limit($limit)
-                ->fetchAll();
-            // Clear previous query state so it doesn't affect other queries we reuse same Instance of DatabaseQueue
-            $this->queryBuilder->reset();
+                ->get();
 
             $failedJobs = [];
             foreach ($rows as $row) {
@@ -241,8 +249,9 @@ class DatabaseQueue extends AbstractQueue
     {
         try {
             $this->queryBuilder
-                ->delete($this->failedTable)
-                ->execute();
+                ->newQuery()
+                ->from($this->failedTable)
+                ->delete();
         } catch (\Exception $e) {
             throw new \RuntimeException('Failed to clear failed jobs: ' . $e->getMessage());
         }
@@ -252,11 +261,10 @@ class DatabaseQueue extends AbstractQueue
     {
         try {
             $count = (int) $this->queryBuilder
-                ->duplicate()
+                ->newQuery()
                 ->from($this->table)
                 ->where('queue', '=', $queue)
                 ->count();
-            $this->queryBuilder->reset();
             return $count;
         } catch (\Exception $e) {
             throw new \RuntimeException('Failed to count jobs in queue: ' . $e->getMessage());
@@ -267,10 +275,9 @@ class DatabaseQueue extends AbstractQueue
     {
         try {
             $count = (int) $this->queryBuilder
-                ->duplicate()
+                ->newQuery()
                 ->from($this->failedTable)
                 ->count();
-            $this->queryBuilder->reset();
             return $count;
         } catch (\Exception $e) {
             throw new \RuntimeException('Failed to count failed jobs: ' . $e->getMessage());
@@ -281,12 +288,14 @@ class DatabaseQueue extends AbstractQueue
     {
         try {
             $this->queryBuilder
-                ->delete($this->table)
-                ->execute();
+                ->newQuery()
+                ->from($this->table)
+                ->delete();
 
             $this->queryBuilder
-                ->delete($this->failedTable)
-                ->execute();
+                ->newQuery()
+                ->from($this->failedTable)
+                ->delete();
         } catch (\Exception $e) {
             throw new \RuntimeException('Failed to purge all queues: ' . $e->getMessage());
         }
@@ -307,13 +316,13 @@ class DatabaseQueue extends AbstractQueue
         $queue = $queue ?? $this->defaultQueue;
 
         try {
-            $this->queryBuilder->beginTransaction();
+            $this->connectionManager->connection()->beginTransaction();
             foreach ($jobs as $jobData) {
                 $this->push($jobData, $queue);
             }
-            $this->queryBuilder->commit();
+            $this->connectionManager->connection()->commit();
         } catch (\Throwable $e) {
-            $this->queryBuilder->rollBack();
+            $this->connectionManager->connection()->rollBack();
             throw new \RuntimeException('Failed to bulk insert jobs to database queue: ' . $e->getMessage(), 0, $e);
         }
     }
@@ -323,13 +332,12 @@ class DatabaseQueue extends AbstractQueue
         $queue = $queue ?? $this->defaultQueue;
         try {
             $rows = $this->queryBuilder
-                ->duplicate()
+                ->newQuery()
                 ->from($this->table)
                 ->where('queue', '=', $queue)
                 ->orderBy('created_at', 'asc')
                 ->limit($limit)
-                ->fetchAll();
-            $this->queryBuilder->reset();
+                ->get();
 
             $jobs = [];
             foreach ($rows as $row) {
@@ -351,12 +359,11 @@ class DatabaseQueue extends AbstractQueue
     {
         try {
             $rows = $this->queryBuilder
-                ->duplicate()
+                ->newQuery()
                 ->from($this->failedTable)
                 ->orderBy('failed_at', 'asc')
                 ->limit($limit)
-                ->fetchAll();
-            $this->queryBuilder->reset();
+                ->get();
 
             foreach ($rows as $row) {
                 $jobData = [
@@ -370,9 +377,10 @@ class DatabaseQueue extends AbstractQueue
 
                 // Remove from failed table
                 $this->queryBuilder
+                    ->newQuery()
+                    ->from($this->failedTable)
                     ->where('id', '=', $row['id'])
-                    ->delete($this->failedTable)
-                    ->execute();
+                    ->delete();
             }
         } catch (\Exception $e) {
             throw new \RuntimeException('Failed to retry failed jobs: ' . $e->getMessage());
@@ -385,9 +393,10 @@ class DatabaseQueue extends AbstractQueue
         try {
             foreach ($ids as $id) {
                 $this->queryBuilder
+                    ->newQuery()
+                    ->from($this->failedTable)
                     ->where('id', '=', $id)
-                    ->delete($this->failedTable)
-                    ->execute();
+                    ->delete();
             }
         } catch (\Exception $e) {
             throw new \RuntimeException('Failed to remove failed jobs: ' . $e->getMessage());
@@ -399,15 +408,14 @@ class DatabaseQueue extends AbstractQueue
         $queue = $queue ?? $this->defaultQueue;
         try {
             $row = $this->queryBuilder
-                ->duplicate()
+                ->newQuery()
                 ->from($this->table)
                 ->where('queue', '=', $queue)
                 ->whereNull('reserved_at')
                 ->whereNull('failed_at')
                 ->orderBy('created_at', 'asc')
                 ->limit(1)
-                ->fetchAssoc();
-            $this->queryBuilder->reset();
+                ->first();
 
             if (!$row) {
                 return null;
@@ -434,12 +442,11 @@ class DatabaseQueue extends AbstractQueue
         try {
             // Find the job in the source queue
             $row = $this->queryBuilder
-                ->duplicate()
+                ->newQuery()
                 ->from($this->table)
                 ->where('id', '=', $jobId)
                 ->where('queue', '=', $fromQueue)
-                ->fetchAssoc();
-            $this->queryBuilder->reset();
+                ->first();
 
             if (!$row) {
                 return;
@@ -447,9 +454,10 @@ class DatabaseQueue extends AbstractQueue
 
             // Update the queue field to move the job
             $this->queryBuilder
+                ->newQuery()
+                ->from($this->table)
                 ->where('id', '=', $jobId)
-                ->update($this->table, ['queue' => $toQueue])
-                ->execute();
+                ->update(['queue' => $toQueue]);
         } catch (\Exception $e) {
             throw new \RuntimeException('Failed to move job to another queue: ' . $e->getMessage());
         }
@@ -463,22 +471,22 @@ class DatabaseQueue extends AbstractQueue
         try {
             // Find all jobs in this queue that are delayed and now available
             $rows = $this->queryBuilder
-                ->duplicate()
+                ->newQuery()
                 ->from($this->table)
                 ->where('queue', '=', $queue)
                 ->whereNull('reserved_at')
                 ->whereNotNull('available_at')
-                ->andWhere('available_at', '<=', $now)
-                ->fetchAll();
-            $this->queryBuilder->reset();
+                ->where('available_at', '<=', $now)
+                ->get();
 
             $count = 0;
             foreach ($rows as $row) {
                 // Set available_at to null to make it ready
                 $this->queryBuilder
+                    ->newQuery()
+                    ->from($this->table)
                     ->where('id', '=', $row['id'])
-                    ->update($this->table, ['available_at' => null])
-                    ->execute();
+                    ->update(['available_at' => null]);
                 $count++;
             }
             return $count;
@@ -494,7 +502,7 @@ class DatabaseQueue extends AbstractQueue
         try {
             // READY
             $ready = $this->queryBuilder
-                ->duplicate()
+                ->newQuery()
                 ->from($this->table)
                 ->where('queue', '=', $queue)
                 ->whereNull('reserved_at')
@@ -507,7 +515,7 @@ class DatabaseQueue extends AbstractQueue
 
             // PROCESSING
             $processing = $this->queryBuilder
-                ->duplicate()
+                ->newQuery()
                 ->from($this->table)
                 ->where('queue', '=', $queue)
                 ->whereNotNull('reserved_at')
@@ -516,7 +524,7 @@ class DatabaseQueue extends AbstractQueue
 
             // DELAYED
             $delayed = $this->queryBuilder
-                ->duplicate()
+                ->newQuery()
                 ->from($this->table)
                 ->where('queue', '=', $queue)
                 ->whereNull('reserved_at')
@@ -526,10 +534,9 @@ class DatabaseQueue extends AbstractQueue
 
             // FAILED
             $failed = $this->queryBuilder
-                ->duplicate()
+                ->newQuery()
                 ->from($this->failedTable)
                 ->count();
-            $this->queryBuilder->reset();
 
             return [
                 'ready'      => (int) $ready,
@@ -553,12 +560,11 @@ class DatabaseQueue extends AbstractQueue
         try {
             // Search in ready, processing, and delayed jobs
             $row = $this->queryBuilder
-                ->duplicate()
+                ->newQuery()
                 ->from($this->table)
                 ->where('id', '=', $jobId)
                 ->where('queue', '=', $queue)
-                ->fetchAssoc();
-            $this->queryBuilder->reset();
+                ->first();
 
             if ($row) {
                 $jobData = [
@@ -575,11 +581,10 @@ class DatabaseQueue extends AbstractQueue
 
             // Optionally, search in failed jobs
             $row = $this->queryBuilder
-                ->duplicate()
+                ->newQuery()
                 ->from($this->failedTable)
                 ->where('id', '=', $jobId)
-                ->fetchAssoc();
-            $this->queryBuilder->reset();
+                ->first();
 
             if ($row) {
                 $jobData = [
@@ -606,10 +611,11 @@ class DatabaseQueue extends AbstractQueue
         try {
             // Try to delete from normal jobs table
             $deleted = $this->queryBuilder
+                ->newQuery()
+                ->from($this->table)
                 ->where('id', '=', $jobId)
-                ->andWhere('queue', '=', $queue)
-                ->delete($this->table)
-                ->execute();
+                ->where('queue', '=', $queue)
+                ->delete();
 
             if ($deleted) {
                 return true;
@@ -617,9 +623,10 @@ class DatabaseQueue extends AbstractQueue
 
             // Try to delete from failed jobs table
             $deleted = $this->queryBuilder
+                ->newQuery()
+                ->from($this->failedTable)
                 ->where('id', '=', $jobId)
-                ->delete($this->failedTable)
-                ->execute();
+                ->delete();
 
             return (bool)$deleted;
         } catch (\Exception $e) {
@@ -632,12 +639,11 @@ class DatabaseQueue extends AbstractQueue
         try {
             // Get all unique queue names from jobs table
             $rows = $this->queryBuilder
-                ->duplicate()
+                ->newQuery()
                 ->from($this->table)
-                ->select('queue')
+                ->select(['queue'])
                 ->groupBy('queue')
-                ->fetchAllAssoc();
-            $this->queryBuilder->reset();
+                ->get();
 
             $queues = [];
             foreach ($rows as $row) {

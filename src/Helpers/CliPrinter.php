@@ -5,25 +5,10 @@ declare(strict_types=1);
 namespace MonkeysLegion\Queue\Helpers;
 
 use MonkeysLegion\Cli\Console\Traits\Cli;
-use MonkeysLegion\Cli\Console\Traits\CliLineBuilder;
 
 class CliPrinter
 {
     use Cli;
-
-    protected function cliLine(): CliLineBuilder
-    {
-        return new class extends CliLineBuilder {
-            public function print(bool $newline = true, $stream = STDOUT): void
-            {
-                $output = $this->build();
-                if ($newline) {
-                    $output .= PHP_EOL;
-                }
-                echo $output;
-            }
-        };
-    }
 
     /**
      * Whether to use output buffering for progress updates
@@ -80,6 +65,6 @@ class CliPrinter
             }
         }
 
-        $line->print();
+        echo $line->build() . PHP_EOL;
     }
 }

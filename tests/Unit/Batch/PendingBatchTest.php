@@ -9,8 +9,12 @@ use MonkeysLegion\Queue\Batch\BatchRepository;
 use MonkeysLegion\Queue\Batch\PendingBatch;
 use MonkeysLegion\Queue\Contracts\DispatchableJobInterface;
 use MonkeysLegion\Queue\Contracts\QueueInterface;
-use MonkeysLegion\Database\Contracts\ConnectionInterface;
-use MonkeysLegion\Database\SQLite\Connection;
+use MonkeysLegion\Database\Contracts\ConnectionManagerInterface;
+use MonkeysLegion\Database\Connection\Connection;
+use MonkeysLegion\Database\Connection\ConnectionManager;
+use MonkeysLegion\Database\Config\DatabaseConfig;
+use MonkeysLegion\Database\Config\DsnConfig;
+use MonkeysLegion\Database\Types\DatabaseDriver;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -19,21 +23,26 @@ class PendingBatchTest extends TestCase
 {
     private QueueInterface&MockObject $queue;
     private BatchRepository $repository;
-    private ConnectionInterface $connection;
+    private ConnectionManagerInterface $connectionManager;
 
     protected function setUp(): void
     {
         $this->queue = $this->createMock(QueueInterface::class);
 
-        $this->connection = new Connection([
-            'memory' => true,
-            'options' => [
-                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-                \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
-            ],
+        $config = new DatabaseConfig(
+            name: 'test',
+            driver: DatabaseDriver::SQLite,
+            dsn: new DsnConfig(
+                driver: DatabaseDriver::SQLite,
+                memory: true,
+            ),
+        );
+
+        $this->connectionManager = new ConnectionManager([
+            'test' => $config,
         ]);
 
-        $this->connection->pdo()->exec("
+        $this->connectionManager->connection()->pdo()->exec("
             CREATE TABLE IF NOT EXISTS job_batches (
                 id VARCHAR(64) PRIMARY KEY,
                 name VARCHAR(255) NULL,
@@ -48,7 +57,7 @@ class PendingBatchTest extends TestCase
             );
         ");
 
-        $this->repository = new BatchRepository($this->connection);
+        $this->repository = new BatchRepository($this->connectionManager);
     }
 
     public function testDispatchPushesAllJobsWithBatchId(): void

@@ -1,63 +1,46 @@
-# MonkeysLegion Queue
+# MonkeysLegion Queue 2.0
 
-A robust, feature-rich queue system for PHP applications with support for multiple drivers, job retries, delayed jobs, and comprehensive monitoring.
+A production-grade, driver-agnostic queue system for PHP 8.4+ with automatic retries, job chaining & batching, rate limiting, lifecycle events, a built-in web dashboard, and a comprehensive CLI toolkit.
 
 [![PHP Version](https://img.shields.io/badge/PHP-8.4%2B-blue.svg)](https://www.php.net/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
+---
+
+## What's New in 2.0
+
+| Area | v1 | v2 |
+|---|---|---|
+| Job contract | Plain classes with `handle()` | `DispatchableJobInterface` — typed, explicit |
+| Serialization | Manual payload arrays | `JobSerializer` trait — auto-extracts constructor params, freezes objects |
+| Worker DI | All dependencies passed manually | `ContainerAware` trait — auto-resolves `QueueEventDispatcher`, `RateLimiterInterface`, `BatchRepository`, `MonkeysLoggerInterface` |
+| Rate limiting | Concrete `RateLimiter` only | `RateLimiterInterface` contract — pluggable implementations |
+| Dashboard | ❌ | Built-in web UI with `QueueDashboardProvider` auto-discovery |
+| Provider system | ❌ | `#[Provider]` attribute + `composer.json` auto-registration |
+| Configuration | PHP array | `.mlc` config format (env-driven) |
+| Dispatcher | Returns `void` | Returns `Batch` from `batch()->dispatch()` for progress tracking |
+
+---
+
 ## Features
 
-✨ **Multiple Queue Drivers**
+✨ **Multiple Queue Drivers** — Redis (production), Database (production), Null (testing)
 
-- Redis (Production-ready)
-- Database (Production-ready)
-- Null (Testing/Development)
+🔄 **Automatic Retries** — Exponential backoff, configurable max attempts, failed job tracking
 
-🔄 **Automatic Retries**
+⏰ **Delayed Jobs & Dispatching** — Schedule future execution, priority queue support, clean dispatcher API
 
-- Exponential backoff strategy
-- Configurable max attempts
-- Failed job tracking
+🔗 **Job Batching & Chaining** — Sequential chains, parallel batches with completion/failure/finally callbacks
 
-⏰ **Delayed Jobs & Dispatching**
+⚡ **Rate Limiting** — Token-bucket `RateLimiterInterface`, per-queue or per-job-type throttling
 
-- Schedule jobs for future execution
-- Automatic delayed job processing
-- Priority queue support (process queues in order)
-- Clean dispatcher API for job dispatching
+🎯 **Queue Events** — `JobProcessing`, `JobProcessed`, `JobFailed`, `BatchCompleted`
 
-🔗 **Job Batching & Chaining**
+📊 **Web Dashboard** — Real-time queue stats, failed job inspection, maintenance actions — auto-registered via `QueueDashboardProvider`
 
-- Group jobs into batches with completion callbacks
-- Chain jobs for sequential execution
-- Track batch progress and handle failures
+🛡️ **Production Ready** — Graceful SIGTERM/SIGINT shutdown, memory-limit protection, GC-aware polling, DI-driven worker
 
-⚡ **Rate Limiting**
-
-- Token bucket rate limiter
-- Per-queue or per-job-type throttling
-- Configurable limits and decay windows
-
-🎯 **Queue Events**
-
-- `JobProcessing` - Before job execution
-- `JobProcessed` - After successful completion
-- `JobFailed` - On job failure
-- `BatchCompleted` - When batch finishes
-
-📊 **Monitoring & Management**
-
-- Real-time queue statistics
-- Failed job inspection
-- Job search and management
-- CLI commands for queue operations
-
-🛡️ **Production Ready**
-
-- Graceful shutdown handling
-- Memory limit protection
-- Signal handling (SIGTERM, SIGINT)
-- Comprehensive error handling
+---
 
 ## Installation
 
@@ -65,9 +48,13 @@ A robust, feature-rich queue system for PHP applications with support for multip
 composer require monkeyscloud/monkeyslegion-queue
 ```
 
+> Requires **PHP 8.4+**, the `ext-redis` extension (for the Redis driver), and the MonkeysLegion CLI package.
+
+---
+
 ## Configuration
 
-Create a configuration file (e.g., `config/queue.php`):
+### MLC Format (`config/queue.mlc`)
 
 ```mlc
 queue {
@@ -88,7 +75,7 @@ queue {
     # Queue drivers
     stores {
         redis {
-            host     = ${REDIS_HOST:-127.0.01}
+            host     = ${REDIS_HOST:-127.0.0.1}
             port     = ${REDIS_PORT:-6379}
             username = ${REDIS_USERNAME:-null}
             password = ${REDIS_PASSWORD:-null}
@@ -99,7 +86,7 @@ queue {
         null {}
 
         database {
-            table = ${QUEUE_DATABASE_TABLE:-jobs}
+            table        = ${QUEUE_DATABASE_TABLE:-jobs}
             failed_table = ${QUEUE_DATABASE_FAILED_TABLE:-failed_jobs}
         }
     }
@@ -108,129 +95,84 @@ queue {
 
 ### Environment Variables
 
-Add to your `.env` file:
-
 ```env
-# Queue Configuration
+# Queue
 QUEUE_DEFAULT=redis
 QUEUE_DEFAULT_QUEUE=default
 QUEUE_FAILED_QUEUE=failed
 QUEUE_PREFIX=ml_queue
 QUEUE_MAX_ATTEMPTS=3
 
-# Redis Configuration
+# Redis
 REDIS_HOST=127.0.0.1
 REDIS_PORT=6379
 REDIS_PASSWORD=
 REDIS_DATABASE=0
 REDIS_TIMEOUT=2.0
 
-# Database Configuration
+# Database driver
 QUEUE_DATABASE_TABLE=jobs
 QUEUE_DATABASE_FAILED_TABLE=failed_jobs
 ```
 
-## Usage
+---
 
-### Creating a Queue Instance
+## Quick Start
+
+### 1 — Create a Queue Instance
 
 ```php
 use MonkeysLegion\Queue\Factory\QueueFactory;
-use MonkeysLegion\Database\MySQL\Connection;
-
-// Initialize connection in case of database driver
-$conn = new Connection([
-    'dsn' => 'mysql:host=localhost;dbname=myapp',
-    'username' => 'root',
-    'password' => 'secret'
-]);
+use MonkeysLegion\Database\Contracts\ConnectionInterface;
 
 $config = require 'config/queue.php';
-$factory = new QueueFactory($config, $conn); // pass connection for database driver only
 
-// Get default queue driver
-$queue = $factory->make();
+// Null / Redis (no DB connection needed)
+$factory = new QueueFactory($config);
+$queue   = $factory->make();          // default driver from config
 
-// Or get specific driver
-$redisQueue = $factory->driver('redis'); // if no connection passed nothing happens
-$nullQueue = $factory->driver('null'); // always works
-$databaseQueue = $factory->driver('database', $conn); // requires connection
+// Database driver requires a ConnectionInterface
+$factory = new QueueFactory($config, $dbConnection);
+$queue   = $factory->driver('database');
 ```
 
-### Creating Jobs
+### 2 — Define a Job
 
-#### Generate Job Class
-
-```bash
-php console make:job SendEmailJob
-```
-
-This creates `app/Jobs/SendEmailJob.php`:
+All dispatchable jobs **must** implement `DispatchableJobInterface`:
 
 ```php
 <?php
 
 namespace App\Jobs;
 
-class SendEmailJob
+use MonkeysLegion\Queue\Contracts\DispatchableJobInterface;
+
+class SendEmailJob implements DispatchableJobInterface
 {
     public function __construct(
         public string $email,
         public string $subject,
-        public string $message
-    ) {
-    }
+        public string $message,
+    ) {}
 
     public function handle(): void
     {
-        // Your job logic here
         mail($this->email, $this->subject, $this->message);
     }
 }
 ```
 
-#### Semantic Clarity (Optional)
+> **Tip:** Generate the boilerplate with `php console make:job SendEmailJob`.
 
-While all jobs are queued by default, you can implement the `ShouldQueue` interface to explicitly mark a class as an asynchronous job. This is recommended for better code readability and semantic clarity:
+#### Marker Interfaces
 
-```php
-use MonkeysLegion\Queue\Contracts\ShouldQueue;
+| Interface | Behaviour |
+|---|---|
+| `DispatchableJobInterface` | **Required.** Provides the `handle()` contract. |
+| `ShouldQueue` | *Optional semantic marker.* Explicitly signals "this class is async." All jobs are async by default. |
+| `ShouldSync` | Causes the dispatcher to run `handle()` **synchronously** in the current process, skipping the queue entirely. |
 
-class SendEmailJob implements ShouldQueue
-{
-    // ...
-}
-```
-
-#### Synchronous Execution
-
-If you need a job to run immediately in the current process (synchronously), implement the `ShouldSync` interface:
-
-```php
-use MonkeysLegion\Queue\Contracts\ShouldSync;
-
-class ProcessImmediateJob implements ShouldSync
-{
-    public function handle(): void
-    {
-        // This will run synchronously when dispatched
-    }
-}
-```
-
-### Dispatching Jobs
-
-#### Using QueueDispatcher (Recommended)
-
-The `QueueDispatcher` provides a clean, object-oriented way to dispatch jobs. By default, all jobs are pushed to the queue driver.
-
-> [!NOTE]
-> The `QueueDispatcher` checks if a job implements the `ShouldSync` interface.
->
-> - If **yes**, the job's `handle()` method is executed **synchronously** in the current process.
-> - If **no** (default), the job is pushed to the queue for asynchronous processing.
->
-> You may implement `ShouldQueue` as a semantic marker to explicitly denote asynchronous jobs.
+### 3 — Dispatch
 
 ```php
 use MonkeysLegion\Queue\Dispatcher\QueueDispatcher;
@@ -238,248 +180,60 @@ use App\Jobs\SendEmailJob;
 
 $dispatcher = new QueueDispatcher($queue);
 
-// Dispatch immediately
-$job = new SendEmailJob('user@example.com', 'Welcome!', 'Thanks for signing up');
+$job = new SendEmailJob('user@example.com', 'Welcome!', 'Thanks for joining');
+
+// Immediate push
 $dispatcher->dispatch($job);
 
-// Dispatch to specific queue
+// To a specific queue
 $dispatcher->dispatch($job, queue: 'emails');
 
-// Dispatch with delay (in seconds)
+// With delay (seconds)
 $dispatcher->dispatch($job, queue: 'emails', delay: 60);
 
-// Dispatch at specific timestamp
+// At an absolute timestamp
 $dispatcher->dispatchAt($job, timestamp: time() + 3600, queue: 'emails');
 ```
 
-#### Push to Queue (Direct)
+The `JobSerializer` trait auto-extracts constructor parameters—including nested objects (serialised for safe JSON/DB storage)—so you never build payload arrays by hand.
 
-```php
-// Simple job
-$queue->push([
-    'job' => 'App\\Jobs\\SendEmailJob',
-    'payload' => ['user@example.com', 'Welcome!', 'Thanks for signing up'],
-]);
-
-// To specific queue
-$queue->push([
-    'job' => 'App\\Jobs\\ProcessImageJob',
-    'payload' => ['/path/to/image.jpg'],
-], 'images');
-```
-
-#### Delayed Jobs
-
-```php
-// Delay by 60 seconds
-$queue->later(60, [
-    'job' => 'App\\Jobs\\SendReminderJob',
-    'payload' => ['user_id' => 123],
-]);
-
-// Delay by 1 hour
-$queue->later(3600, [
-    'job' => 'App\\Jobs\\GenerateReportJob',
-    'payload' => ['report_id' => 456],
-]);
-```
-
-#### Bulk Jobs
-
-```php
-$jobs = [
-    ['job' => 'App\\Jobs\\SendEmailJob', 'payload' => ['email1@example.com', 'Subject', 'Message']],
-    ['job' => 'App\\Jobs\\SendEmailJob', 'payload' => ['email2@example.com', 'Subject', 'Message']],
-    ['job' => 'App\\Jobs\\SendEmailJob', 'payload' => ['email3@example.com', 'Subject', 'Message']],
-];
-
-$queue->bulk($jobs, 'emails');
-```
-
-### Running Workers
-
-#### Start Worker
+### 4 — Run a Worker
 
 ```bash
-# Basic worker
-php console queue:work
-
-# Process specific queue
-php console queue:work --queue=emails
-
-# Priority queues (processes in order: high, default, low)
-php console queue:work --queue=high,default,low
-
-# With options
-php console queue:work \
-    --queue=emails \
-    --sleep=3 \
-    --tries=5 \
-    --memory=256 \
-    --timeout=120
+php console queue:work --queue=emails --sleep=3 --tries=5 --memory=256 --timeout=120
 ```
 
-**Worker Options:**
+| Flag | Default | Description |
+|---|---|---|
+| `--queue` | `default` | Comma-separated list; first queue has highest priority |
+| `--sleep` | `3` | Seconds to idle when the queue is empty |
+| `--tries` | `3` | Max retry attempts per job |
+| `--memory` | `128` | Memory limit in MB |
+| `--timeout` | `60` | Per-job timeout in seconds |
 
-- `--queue` - Queue name(s) to process. Use comma-separated list for priority queues (default: `default`)
-- `--sleep` - Seconds to wait when queue is empty (default: `3`)
-- `--tries` - Max retry attempts (default: `3`)
-- `--memory` - Memory limit in MB (default: `128`)
-- `--timeout` - Job timeout in seconds (default: `60`)
+**Priority queues** — `--queue=high,default,low` processes `high` first, then `default`, then `low`.
 
-**Priority Queues:**
-When multiple queues are specified, the worker processes them in order. Jobs from the first queue are always processed before jobs from subsequent queues, allowing you to implement priority-based job processing.
-
-#### Worker Output
+Worker output:
 
 ```
 [09:45:12] • Worker started (queue=default)
-[09:45:13] → Processing (job_id=1a2b3c4d, attempts=1)
-[09:45:14] ✓ Completed (job_id=1a2b3c4d, duration_ms=1250.45)
-[09:45:15] → Processing (job_id=5e6f7g8h, attempts=1)
-[09:45:16] ⚠ Retrying (job_id=5e6f7g8h, attempts=1, delay=1)
-[09:45:18] → Processing (job_id=5e6f7g8h, attempts=2)
-[09:45:19] ✗ Failed (job_id=5e6f7g8h, attempts=3)
+[09:45:13] → Processing (class=App\Jobs\SendEmailJob, job_id=1a2b3c4d, attempts=1, queue=default)
+[09:45:14] ✓ Completed  (class=App\Jobs\SendEmailJob, job_id=1a2b3c4d, duration_ms=1250.45, queue=default)
+[09:45:18] ⚠ Pushed to retry later (class=App\Jobs\SendEmailJob, job_id=5e6f7g8h, attempts=1, delay=1)
+[09:45:22] ✗ Failed     (class=App\Jobs\SendEmailJob, job_id=5e6f7g8h, attempts=3)
 ```
 
-#### Graceful Shutdown
+Graceful shutdown: `kill -SIGTERM <pid>` or `Ctrl+C`. The worker finishes the current job, then exits.
 
-Workers handle `SIGTERM` and `SIGINT` signals:
-
-```bash
-# Stop worker gracefully (finishes current job)
-kill -SIGTERM <worker_pid>
-
-# Or use Ctrl+C
-```
-
-## CLI Commands
-
-### Setup
-
-```bash
-# Setup database tables for the queue system
-php console queue:setup
-```
-
-This command will interactively ask for the table names (defaults: `jobs` and `failed_jobs`) and create them if they don't exist. It also provides the necessary `.env` configuration.
-
-### Queue Management
-
-```bash
-# List all queues with statistics
-php console queue:list
-
-# View queue statistics
-php console queue:stats default
-
-# Clear a queue
-php console queue:clear default
-```
-
-### Failed Jobs
-
-```bash
-# List failed jobs
-php console queue:failed --limit=20
-
-# Retry failed jobs and moves them back to their original queue
-php console queue:retry --limit=100
-
-# Permanently delete all failed jobs
-php console queue:flush
-```
-
-### Job Creation
-
-```bash
-# Generate a new job class
-php console make:job ProcessOrderJob
-php console make:job Notifications/SendPushNotification
-```
-
-## Queue Operations
-
-### Monitoring
-
-```php
-// Get queue statistics
-$stats = $queue->getStats('default');
-/*
-[
-    'ready' => 10,
-    'processing' => 2,
-    'delayed' => 5,
-    'failed' => 1
-]
-*/
-
-// Count jobs in queue
-$count = $queue->count('emails');
-
-// Count failed jobs
-$failedCount = $queue->countFailed();
-
-// List all queues
-$queues = $queue->getQueues();
-```
-
-### Queue Inspection
-
-```php
-// List jobs (without removing)
-$jobs = $queue->listQueue('default', 10);
-
-// Peek at next job (without removing)
-$nextJob = $queue->peek('default');
-
-// Find specific job by ID
-$job = $queue->findJob('job_abc123', 'default');
-```
-
-### Job Management
-
-```php
-// Delete specific job
-$queue->deleteJob('job_abc123', 'default');
-
-// Move job between queues
-$queue->moveJobToQueue('job_abc123', 'from_queue', 'to_queue');
-
-// Clear entire queue
-$queue->clear('default');
-
-// Purge all queues
-$queue->purge();
-```
-
-### Failed Jobs
-
-```php
-// Get failed jobs
-$failedJobs = $queue->getFailed(20);
-
-// Retry all failed jobs & move them back to their original queues
-$queue->retryFailed(100);
-
-// Remove specific failed jobs & Accept string or simple array of job IDs
-$queue->removeFailedJobs(['job_123', 'job_456']);
-
-// Clear all failed jobs
-$queue->clearFailed();
-```
+---
 
 ## Advanced Usage
 
 ### Job Chaining
 
-Run jobs sequentially - each job only starts after the previous completes:
+Jobs run **sequentially** — each starts only after the previous succeeds. Chain metadata is embedded in the job payload; the `Job` wrapper dispatches the next job on completion.
 
 ```php
-use MonkeysLegion\Queue\Dispatcher\QueueDispatcher;
-
-$dispatcher = new QueueDispatcher($queue);
-
 $dispatcher->chain([
     new DownloadFileJob($url),
     new ProcessFileJob($path),
@@ -488,11 +242,11 @@ $dispatcher->chain([
 ```
 
 > [!IMPORTANT]
-> Jobs in a Chain or Batch are **always** queued, regardless of whether they implement the `ShouldQueue` interface.
+> Jobs inside a Chain or Batch are **always** queued, regardless of `ShouldSync`.
 
 ### Job Batching
 
-Group multiple jobs and track their collective completion:
+Group parallel jobs, track progress, and register callbacks:
 
 ```php
 $batch = $dispatcher->batch([
@@ -506,140 +260,244 @@ $batch = $dispatcher->batch([
 ->finally('App\\Callbacks\\BatchComplete')
 ->dispatch();
 
-// Check batch status
 echo $batch->progress() . '% complete';
 echo $batch->getPendingJobs() . ' jobs remaining';
 ```
 
+> Batching requires a `BatchRepository` (database-backed). Pass it to `QueueDispatcher`:
+> ```php
+> $dispatcher = new QueueDispatcher($queue, new BatchRepository($dbConnection));
+> ```
+
 ### Rate Limiting
 
-Throttle job processing to prevent overload:
+Throttle job throughput with the `RateLimiterInterface` contract. The built-in `RateLimiter` uses an in-memory token-bucket:
 
 ```php
 use MonkeysLegion\Queue\RateLimiter\RateLimiter;
-use MonkeysLegion\Queue\Worker\Worker;
 
 $rateLimiter = new RateLimiter(
-    maxAttempts: 60,    // Max 60 jobs
-    decaySeconds: 60    // Per minute
-);
-
-$worker = new Worker(
-    queue: $queue,
-    rateLimiter: $rateLimiter
+    maxAttempts:  60,   // 60 jobs …
+    decaySeconds: 60,   // … per minute
 );
 ```
 
-### Queue Events
+The `Worker` resolves `RateLimiterInterface` from the DI container automatically. When rate-limited, jobs are released back with a delay.
 
-Listen for job lifecycle events:
+### Queue Events
 
 ```php
 use MonkeysLegion\Queue\Events\QueueEventDispatcher;
 use MonkeysLegion\Queue\Events\JobProcessed;
 use MonkeysLegion\Queue\Events\JobFailed;
+use MonkeysLegion\Queue\Events\JobProcessing;
+use MonkeysLegion\Queue\Events\BatchCompleted;
 
 $events = new QueueEventDispatcher();
 
-$events->listen(JobProcessed::class, function ($event) {
-    Log::info("Job {$event->job->getId()} completed in {$event->processingTimeMs}ms");
+$events->listen(JobProcessed::class, function (JobProcessed $e) {
+    Log::info("Job {$e->job->getId()} done in {$e->processingTimeMs}ms");
 });
 
-$events->listen(JobFailed::class, function ($event) {
-    Log::error("Job failed: " . $event->exception->getMessage());
-    if (!$event->willRetry) {
-        // Final failure - notify admin
+$events->listen(JobFailed::class, function (JobFailed $e) {
+    Log::error("Job failed: " . $e->exception->getMessage());
+    if (!$e->willRetry) {
+        // Final failure — alert ops
     }
 });
-
-$worker = new Worker(
-    queue: $queue,
-    eventDispatcher: $events
-);
 ```
 
-### Custom Worker
+The worker dispatches events automatically when `QueueEventDispatcher` is registered in the container.
+
+---
+
+## Dashboard
+
+The queue package ships a full web dashboard, auto-registered via the `QueueDashboardProvider`.
+
+### Setup
+
+Add the provider to your framework's `composer.json` extra key (done automatically on install):
+
+```json
+{
+  "extra": {
+    "monkeyslegion": {
+      "providers": [
+        "MonkeysLegion\\Queue\\Providers\\QueueDashboardProvider"
+      ]
+    }
+  }
+}
+```
+
+The provider registers template views, scans the `DashboardController`, and resolves the URL prefix from your queue config's `path` setting.
+
+### Routes
+
+All routes live under `/{path}/dashboard` (default: `/ml-queue/dashboard`):
+
+| Method | Route | Action |
+|---|---|---|
+| `GET` | `/` | Overview — queue list, stats, failed count |
+| `GET` | `/queues` | Browse jobs in a specific queue |
+| `GET` | `/delayed` | Inspect delayed/scheduled jobs |
+| `GET` | `/failed` | List failed jobs |
+| `GET` | `/maintenance` | Maintenance panel |
+| `GET` | `/job?id=…&queue=…` | Single job detail |
+| `POST` | `/job/delete` | Delete a job |
+| `POST` | `/failed/retry` | Retry failed jobs |
+| `POST` | `/failed/delete` | Delete specific failed jobs |
+| `POST` | `/failed/clear` | Purge all failed jobs |
+| `POST` | `/queue/clear` | Clear a queue |
+| `POST` | `/queue/purge` | Purge **all** queues |
+| `POST` | `/delayed/process` | Force-process delayed jobs now |
+
+---
+
+## CLI Commands
+
+### Setup
+
+```bash
+# Create the jobs and failed_jobs tables interactively
+php console queue:setup
+```
+
+### Queue Management
+
+```bash
+php console queue:list           # List all queues with statistics
+php console queue:stats default  # View stats for a specific queue
+php console queue:clear default  # Clear a queue
+```
+
+### Failed Jobs
+
+```bash
+php console queue:failed --limit=20   # List failed jobs
+php console queue:retry  --limit=100  # Retry failed → move back to original queue
+php console queue:flush               # Permanently delete all failed jobs
+```
+
+### Job Scaffolding
+
+```bash
+php console make:job ProcessOrderJob
+php console make:job Notifications/SendPushNotification
+```
+
+---
+
+## Programmatic Queue Operations
+
+### Push & Pop
 
 ```php
-use MonkeysLegion\Queue\Worker\Worker;
-use MonkeysLegion\Queue\Factory\QueueFactory;
+// Direct push (raw array format)
+$queue->push([
+    'job'     => 'App\\Jobs\\SendEmailJob',
+    'payload' => ['user@example.com', 'Welcome!', 'Thanks'],
+], 'emails');
 
-$config = require 'config/queue.php';
-$factory = new QueueFactory($config);
-$queue = $factory->make();
+// Delayed push
+$queue->later(60, [
+    'job'     => 'App\\Jobs\\SendReminderJob',
+    'payload' => ['user_id' => 123],
+]);
 
-$worker = new Worker(
-    queue: $queue,
-    sleep: 3,
-    maxTries: 5,
-    memory: 256,
-    timeout: 120,
-    delayedCheckInterval: 30,
-    eventDispatcher: $events,
-    rateLimiter: $rateLimiter
-);
-
-// Start processing
-$worker->work('default', 3);
-
-// Get worker stats
-$stats = $worker->getStats();
-/*
-[
-    'processed_jobs' => 42,
-    'memory_usage_mb' => 45.23,
-    'should_quit' => false
-]
-*/
+// Bulk push
+$queue->bulk([
+    ['job' => 'App\\Jobs\\SendEmailJob', 'payload' => ['a@b.com', 'Hi', 'Body']],
+    ['job' => 'App\\Jobs\\SendEmailJob', 'payload' => ['c@d.com', 'Hi', 'Body']],
+], 'emails');
 ```
 
-### Job Retries with Exponential Backoff
+### Monitoring
 
-The worker automatically retries failed jobs with exponential backoff:
+```php
+$stats = $queue->getStats('default');
+// ['ready' => 10, 'processing' => 2, 'delayed' => 5, 'failed' => 1]
 
-- **Attempt 1**: Retry after 1 second (2^0)
-- **Attempt 2**: Retry after 2 seconds (2^1)
-- **Attempt 3**: Retry after 4 seconds (2^2)
-- **Attempt 4**: Retry after 8 seconds (2^3)
-- **Attempt 5**: Retry after 16 seconds (2^4)
-- **Attempt 6**: Retry after 32 seconds (2^5)
-- **Attempt 7+**: Retry after 60 seconds (capped)
+$count       = $queue->count('emails');
+$failedCount = $queue->countFailed();
+$queues      = $queue->getQueues();
+```
 
-### Null Queue (Testing)
+### Inspection
 
-Use the Null queue driver for testing without actual queue operations:
+```php
+$jobs    = $queue->listQueue('default', 10);
+$nextJob = $queue->peek('default');
+$job     = $queue->findJob('job_abc123', 'default');
+```
+
+### Management
+
+```php
+$queue->deleteJob('job_abc123', 'default');
+$queue->moveJobToQueue('job_abc123', 'from_queue', 'to_queue');
+$queue->clear('default');
+$queue->purge();
+```
+
+### Failed Jobs
+
+```php
+$failedJobs = $queue->getFailed(20);
+$queue->retryFailed(100);
+$queue->removeFailedJobs(['job_123', 'job_456']);
+$queue->clearFailed();
+```
+
+---
+
+## Null Queue (Testing)
 
 ```php
 $factory = new QueueFactory([
-    'default' => 'null',
+    'default'  => 'null',
     'settings' => [],
-    'stores' => ['null' => []],
+    'stores'   => ['null' => []],
 ]);
 
 $queue = $factory->make();
 
-// All operations are no-ops
-$queue->push(['job' => 'TestJob', 'payload' => []]);
-$job = $queue->pop(); // Returns null
-$count = $queue->count(); // Returns 0
+$queue->push(['job' => 'TestJob', 'payload' => []]); // no-op
+$queue->pop();   // null
+$queue->count(); // 0
 ```
 
-## Architecture
+---
 
-### Components
+## Job Retries — Exponential Backoff
+
+| Attempt | Delay |
+|---|---|
+| 1 | 1 s |
+| 2 | 2 s |
+| 3 | 4 s |
+| 4 | 8 s |
+| 5 | 16 s |
+| 6 | 32 s |
+| 7+ | 60 s (cap) |
+
+---
+
+## Architecture
 
 ```
 src/
 ├── Abstract/
-│   └── AbstractQueue.php        # Base queue implementation
+│   └── AbstractQueue.php            # Base queue with config, encode/decode, default impls
 ├── Batch/
-│   ├── Batch.php               # Batch state container
-│   ├── BatchRepository.php     # Database-backed batch storage
-│   └── PendingBatch.php        # Fluent batch builder
+│   ├── Batch.php                    # Batch state container (progress, cancel, toArray)
+│   ├── BatchRepository.php          # Database-backed batch storage
+│   └── PendingBatch.php             # Fluent batch builder (then/catch/finally)
 ├── Chain/
-│   └── PendingChain.php        # Job chain builder
+│   └── PendingChain.php             # Fluent chain builder (onQueue/dispatch)
 ├── Cli/
-│   └── Command/                 # CLI commands
+│   └── Command/
 │       ├── MakeJobCommand.php
 │       ├── QueueWorkCommand.php
 │       ├── QueueListCommand.php
@@ -647,75 +505,107 @@ src/
 │       ├── QueueFailedCommand.php
 │       ├── QueueRetryCommand.php
 │       ├── QueueFlushCommand.php
-│       └── QueueStatsCommand.php
+│       ├── QueueStatsCommand.php
+│       └── SetupDatabaseCommand.php # Interactive table creation
 ├── Contracts/
-│   ├── JobInterface.php         # Job contract
-│   ├── DispatcherInterface.php  # Job dispatcher contract
-│   ├── QueueInterface.php       # Queue driver contract
-│   └── WorkerInterface.php      # Worker contract
+│   ├── DispatchableJobInterface.php # handle() contract for user jobs
+│   ├── JobInterface.php             # Internal job wrapper contract
+│   ├── QueueDispatcherInterface.php # dispatch() / dispatchAt()
+│   ├── QueueInterface.php           # Queue driver contract (22 methods)
+│   ├── ShouldQueue.php              # Semantic async marker
+│   ├── ShouldSync.php               # Forces synchronous execution
+│   └── WorkerInterface.php          # work() / process() / stop()
+├── Dashboard/
+│   └── DashboardController.php      # Web UI controller (attribute-routed)
 ├── Dispatcher/
-│   └── QueueDispatcher.php     # Job dispatcher
+│   └── QueueDispatcher.php          # Dispatch, chain, batch entry point
 ├── Driver/
-│   ├── DatabaseQueue.php       # Database implementation
-│   ├── RedisQueue.php          # Redis implementation
-│   └── NullQueue.php           # Null implementation
+│   ├── DatabaseQueue.php            # PDO / ConnectionInterface driver
+│   ├── RedisQueue.php               # ext-redis driver
+│   └── NullQueue.php                # No-op driver for tests
 ├── Events/
-│   └── QueueEventDispatcher.php # Event system
+│   ├── QueueEventDispatcher.php     # listen() / dispatch() / forget()
+│   ├── JobProcessing.php            # Before execution
+│   ├── JobProcessed.php             # After success (includes processingTimeMs)
+│   ├── JobFailed.php                # On failure (includes willRetry flag)
+│   └── BatchCompleted.php           # When batch finishes
 ├── Factory/
-│   └── QueueFactory.php        # Queue factory
+│   └── QueueFactory.php             # make() / driver() factory
 ├── Helpers/
-│   └── CliPrinter.php          # CLI output helper
+│   └── CliPrinter.php               # Styled CLI output
 ├── Job/
-│   └── Job.php                 # Job wrapper
+│   └── Job.php                      # Internal wrapper — deserialise, handle, chain dispatch
+├── Providers/
+│   └── QueueDashboardProvider.php   # Auto-registers dashboard views & routes
 ├── RateLimiter/
-│   └── RateLimiter.php         # Rate limiting
+│   ├── RateLimiterInterface.php     # attempt() / availableIn() / remaining() / reset()
+│   └── RateLimiter.php              # In-memory token-bucket implementation
+├── Template/
+│   └── views/dashboard/             # Dashboard Blade-like templates
+├── Traits/
+│   └── JobSerializer.php            # serializeJob() / unserializeJob() — shared across dispatcher, chain, batch
 └── Worker/
-    └── Worker.php              # Queue worker
+    └── Worker.php                   # ContainerAware worker with signal handling & GC
 ```
 
-### Flow
+### Data Flow
 
 ```
-┌─────────────┐
-│   Dispatch  │
-│     Job     │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐
-│    Queue    │
-│   (Redis)   │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐
-│   Worker    │
-│   Polling   │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐     Success     ┌─────────────┐
-│   Process   ├────────────────►│     ACK     │
-│     Job     │                 └─────────────┘
-└──────┬──────┘
-       │
-       │ Failure
-       ▼
-┌─────────────┐     Max Tries   ┌─────────────┐
-│    Retry    ├────────────────►│    Failed   │
-│   (Delay)   │    Exceeded     │    Queue    │
-└─────────────┘                 └─────────────┘
+┌─────────────────┐
+│   Dispatcher    │
+│  dispatch(job)  │
+└────────┬────────┘
+         │  serialiseJob()
+         ▼
+┌─────────────────┐
+│  Queue Driver   │
+│  (Redis / DB)   │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│     Worker      │
+│   pop → handle  │
+└────────┬────────┘
+         │
+    ┌────┴────┐
+    ▼         ▼
+ Success    Failure
+    │         │
+    ▼         ▼
+  ack()    attempts < max?
+            ├─ yes → release(delay)
+            └─ no  → fail() → failed queue
 ```
+
+---
+
+## Database Migrations
+
+Three migration templates ship under `migration/`:
+
+- `queue_jobs.sql` — main jobs table
+- `failed_jobs.sql` — failed jobs table
+- `job_batches.sql` — batch tracking table
+
+Run `php console queue:setup` for interactive table creation, or apply the SQL files directly.
+
+---
 
 ## Requirements
 
 - PHP 8.4 or higher
-- Redis extension (for Redis driver)
-- MonkeysLegion CLI package
+- Redis extension (`ext-redis`) for the Redis driver
+- `monkeyscloud/monkeyslegion-cli` ^2.0
+- `monkeyscloud/monkeyslegion-database` ^2.0 (for the Database driver & batch storage)
+
+---
 
 ## License
 
-MIT License. See [LICENSE](LICENSE) file for details.
+MIT License. See [LICENSE](LICENSE) for details.
+
+---
 
 ## Contributing
 
@@ -725,15 +615,18 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 For issues, questions, or suggestions, please open an issue on GitHub.
 
+---
+
 ## Roadmap
 
 - [x] Priority queues
 - [x] Job batching
 - [x] Job chaining
 - [x] Rate limiting
-- [x] Queue events/hooks
-- [ ] Dashboard UI
+- [x] Queue events / hooks
+- [x] Dashboard UI
 - [ ] Metrics & analytics
+- [ ] Horizontal scaling helpers
 
 ---
 

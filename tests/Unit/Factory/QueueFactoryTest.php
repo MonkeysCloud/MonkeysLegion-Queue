@@ -133,7 +133,7 @@ class QueueFactoryTest extends TestCase
         $factory = new QueueFactory($config);
 
         $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Database connection is required for Database queue driver');
+        $this->expectExceptionMessage('Database connection manager is required for Database queue driver');
 
         $factory->driver('database');
     }

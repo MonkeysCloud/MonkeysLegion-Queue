@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace MonkeysLegion\Queue\Batch;
 
-use MonkeysLegion\Database\Contracts\ConnectionInterface;
-use MonkeysLegion\Query\QueryBuilder;
+use MonkeysLegion\Database\Contracts\ConnectionManagerInterface;
+use MonkeysLegion\Query\Query\QueryBuilder;
 use MonkeysLegion\Queue\Contracts\QueueInterface;
 
 /**
@@ -26,18 +26,18 @@ class BatchRepository
     private QueryBuilder $queryBuilder;
 
     public function __construct(
-        private ConnectionInterface $connection,
+        private ConnectionManagerInterface $connectionManager,
         string $table = 'job_batches',
         private ?QueueInterface $queue = null
     ) {
         $this->table = $table;
-        $this->queryBuilder = new QueryBuilder($this->connection);
+        $this->queryBuilder = new QueryBuilder($this->connectionManager);
     }
 
     public function store(Batch $batch): void
     {
         try {
-            $this->queryBuilder->insert($this->table, [
+            $this->queryBuilder->from($this->table)->insert([
                 'id' => $batch->id,
                 'name' => null, // Batch name not currently in Batch object, could be added later
                 'total_jobs' => $batch->getTotalJobs(),
@@ -63,11 +63,10 @@ class BatchRepository
     {
         try {
             $row = $this->queryBuilder
-                ->duplicate()
+                ->newQuery()
                 ->from($this->table)
                 ->where('id', '=', $batchId)
-                ->fetchAssoc();
-            $this->queryBuilder->reset();
+                ->first();
 
             if (!$row) {
                 return null;
@@ -101,15 +100,15 @@ class BatchRepository
     {
         try {
             $this->queryBuilder
+                ->from($this->table)
                 ->where('id', '=', $batch->id)
-                ->update($this->table, [
+                ->update([
                     'pending_jobs' => $batch->getPendingJobs(),
                     'failed_jobs' => $batch->getFailedJobs(),
                     'failed_job_ids' => json_encode($batch->getFailedJobIds(), JSON_UNESCAPED_UNICODE),
                     'cancelled_at' => $batch->cancelled() ? ($batch->getFinishedAt() ?? microtime(true)) : null,
                     'finished_at' => $batch->getFinishedAt(),
-                ])
-                ->execute();
+                ]);
         } catch (\Exception $e) {
             throw new \RuntimeException('Failed to update batch: ' . $e->getMessage());
         }
@@ -119,9 +118,9 @@ class BatchRepository
     {
         try {
             $this->queryBuilder
+                ->from($this->table)
                 ->where('id', '=', $batchId)
-                ->delete($this->table)
-                ->execute();
+                ->delete();
         } catch (\Exception $e) {
              throw new \RuntimeException('Failed to delete batch: ' . $e->getMessage());
         }
@@ -133,7 +132,7 @@ class BatchRepository
      */
     public function recordJobCompletion(string $batchId, bool $successful, ?string $jobId = null): void
     {
-        $this->connection->pdo()->beginTransaction();
+        $this->connectionManager->connection()->pdo()->beginTransaction();
 
         try {
             // Find batch with lock
@@ -145,7 +144,7 @@ class BatchRepository
             $batch = $this->find($batchId);
 
             if (!$batch) {
-                $this->connection->pdo()->rollBack();
+                $this->connectionManager->connection()->pdo()->rollBack();
                 return;
             }
 
@@ -163,7 +162,7 @@ class BatchRepository
 
             $isFinished = $batch->finished();
 
-            $this->connection->pdo()->commit();
+            $this->connectionManager->connection()->pdo()->commit();
 
             if ($isFinished) {
                 // To be safe, we could check if WE were the ones to finish it.
@@ -179,7 +178,7 @@ class BatchRepository
                 $this->executeCallbacks($batch);
             }
         } catch (\Throwable $e) {
-            $this->connection->pdo()->rollBack();
+            $this->connectionManager->connection()->pdo()->rollBack();
             throw $e;
         }
     }
@@ -221,10 +220,9 @@ class BatchRepository
     public function all(): array
     {
         $rows = $this->queryBuilder
-            ->duplicate()
+            ->newQuery()
             ->from($this->table)
-            ->fetchAll();
-        $this->queryBuilder->reset();
+            ->get();
 
         $batches = [];
         foreach ($rows as $row) {
@@ -239,6 +237,6 @@ class BatchRepository
      */
     public function clear(): void
     {
-        $this->queryBuilder->delete($this->table)->execute();
+        $this->queryBuilder->from($this->table)->delete();
     }
 }
